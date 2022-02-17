@@ -1,9 +1,0 @@
-{
-  "name": "Compiler",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/node": "^17.0.17"
-  }
-}
