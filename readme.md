@@ -1,4 +1,4 @@
-# Moongate.js
+# Mongate.js
 
 ### Inspired on <a href="https://imba.io" target="_blank">Imba.io</a>
 
@@ -7,8 +7,3 @@
 -   [ ] **SSR**;
 -   [ ] **SSG**;
 -   [ ] **API**;
-
-#### Events:
-
--   [ ] **onMount**;
--   [ ] **onUnmount**;
