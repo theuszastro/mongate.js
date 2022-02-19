@@ -3,6 +3,17 @@ import { Boolean } from './Boolean';
 
 export class Identifier {
 	private value: string = '';
+	private keywords = {
+		let: 'VariableKeyword',
+		const: 'ConstantKeyword',
+		def: 'FunctionKeyword',
+		async: 'AsyncKeyword',
+		await: 'AwaitKeyword',
+		loop: 'LoopKeyword',
+		for: 'ForKeyword',
+		if: 'IfKeyword',
+		else: 'ElseKeyword',
+	} as { [key: string]: string };
 
 	constructor(private pointer: Pointer, private boolean: Boolean) {}
 
@@ -27,6 +38,14 @@ export class Identifier {
 
 			if (this.boolean.isBoolean(this.value)) {
 				return this.boolean.boolean(this.value);
+			}
+
+			const keyword = this.keywords[this.value];
+			if (keyword) {
+				return {
+					type: keyword,
+					ctx: pointer.context(),
+				};
 			}
 
 			return {

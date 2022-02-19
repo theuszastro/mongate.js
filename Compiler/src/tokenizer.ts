@@ -1,4 +1,5 @@
 import { Boolean } from './tokens/Boolean';
+import { Brackets } from './tokens/Brackets';
 import { Colon } from './tokens/Colon';
 import { Identifier } from './tokens/Identifier';
 import { NewLine } from './tokens/NewLine';
@@ -8,8 +9,6 @@ import { Whitespace } from './tokens/Whitespace';
 import { Pointer } from './utils/Pointer';
 
 export class Tokenizer {
-	private keywords = {};
-
 	private pointer: Pointer;
 	private newline: NewLine;
 	private colon: Colon;
@@ -18,6 +17,7 @@ export class Tokenizer {
 	private string: String;
 	private number: Number;
 	private boolean: Boolean;
+	private brackets: Brackets;
 
 	constructor(filename: string, content: string) {
 		this.pointer = new Pointer(filename, content);
@@ -29,6 +29,7 @@ export class Tokenizer {
 		this.string = new String(this.pointer);
 		this.number = new Number(this.pointer);
 		this.boolean = new Boolean(this.pointer);
+		this.brackets = new Brackets(this.pointer);
 		this.identifier = new Identifier(this.pointer, this.boolean);
 	}
 
@@ -49,6 +50,7 @@ export class Tokenizer {
 			this.whitespace.whitespace() ||
 			this.colon.semicolon() ||
 			this.colon.colon() ||
+			this.brackets.square() ||
 			this.identifier.identifier() ||
 			this.string.string() ||
 			this.boolean.boolean() ||

@@ -15,7 +15,6 @@ export class String {
 		if (!this.isString(pointer.char)) return null;
 
 		this.value = '';
-
 		this.pointer.next();
 
 		while (!this.isString(pointer.char)) {
@@ -25,6 +24,8 @@ export class String {
 
 			pointer.next();
 		}
+
+		pointer.next();
 
 		if (this.value.length >= 1) {
 			return {
