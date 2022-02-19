@@ -13,7 +13,6 @@ export class Whitespace {
 		if (!this.isWhitespace()) return null;
 
 		this.size = 1;
-
 		this.pointer.next();
 
 		while (this.isWhitespace()) {

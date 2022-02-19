@@ -3,7 +3,6 @@ export class Pointer {
 	private column = 1;
 	private cursor = 0;
 
-	public ident: number = 0;
 	public char: string;
 
 	constructor(private filename: string, private content: string) {
