@@ -5,6 +5,7 @@ import { Identifier } from './tokens/Identifier';
 import { NewLine } from './tokens/NewLine';
 import { Number } from './tokens/Number';
 import { Operator } from './tokens/Operator';
+import { OperatorLogic } from './tokens/OperatorLogic';
 import { String } from './tokens/String';
 import { Whitespace } from './tokens/Whitespace';
 import { Pointer } from './utils/Pointer';
@@ -20,6 +21,7 @@ export class Tokenizer {
 	private boolean: Boolean;
 	private brackets: Brackets;
 	private operator: Operator;
+	private operatorLogic: OperatorLogic;
 
 	constructor(filename: string, content: string) {
 		this.pointer = new Pointer(filename, content);
@@ -34,6 +36,7 @@ export class Tokenizer {
 		this.brackets = new Brackets(this.pointer);
 		this.identifier = new Identifier(this.pointer, this.boolean);
 		this.operator = new Operator(this.pointer);
+		this.operatorLogic = new OperatorLogic(this.pointer);
 	}
 
 	private endFile() {
@@ -59,6 +62,7 @@ export class Tokenizer {
 			this.boolean.boolean() ||
 			this.number.number() ||
 			this.operator.operator() ||
+			this.operatorLogic.operatorLogic() ||
 			this.endFile();
 
 		console.log(token);
