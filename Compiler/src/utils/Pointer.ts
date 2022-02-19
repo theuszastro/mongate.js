@@ -21,6 +21,8 @@ export class Pointer {
 		this.cursor++;
 		this.column++;
 		this.char = this.content[this.cursor];
+
+		console.log(this.char);
 	}
 
 	nextLine() {

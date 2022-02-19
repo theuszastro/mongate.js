@@ -1,4 +1,6 @@
+import { Boolean } from './tokens/Boolean';
 import { Colon } from './tokens/Colon';
+import { Identifier } from './tokens/Identifier';
 import { NewLine } from './tokens/NewLine';
 import { Number } from './tokens/Number';
 import { String } from './tokens/String';
@@ -12,8 +14,10 @@ export class Tokenizer {
 	private newline: NewLine;
 	private colon: Colon;
 	private whitespace: Whitespace;
-	private number: Number;
+	private identifier: Identifier;
 	private string: String;
+	private number: Number;
+	private boolean: Boolean;
 
 	constructor(filename: string, content: string) {
 		this.pointer = new Pointer(filename, content);
@@ -21,8 +25,11 @@ export class Tokenizer {
 		this.newline = new NewLine(this.pointer);
 		this.colon = new Colon(this.pointer);
 		this.whitespace = new Whitespace(this.pointer);
+
 		this.string = new String(this.pointer);
 		this.number = new Number(this.pointer);
+		this.boolean = new Boolean(this.pointer);
+		this.identifier = new Identifier(this.pointer, this.boolean);
 	}
 
 	private endFile() {
@@ -42,8 +49,10 @@ export class Tokenizer {
 			this.whitespace.whitespace() ||
 			this.colon.semicolon() ||
 			this.colon.colon() ||
-			this.number.number() ||
+			this.identifier.identifier() ||
 			this.string.string() ||
+			this.boolean.boolean() ||
+			this.number.number() ||
 			this.endFile();
 
 		console.log(token);
