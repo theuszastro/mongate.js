@@ -1,5 +1,3 @@
-import { buffer } from 'stream/consumers';
-
 export class Tokenizer {
 	constructor(file, code) {
 		this.line = 1;
@@ -13,6 +11,8 @@ export class Tokenizer {
 
 		this.keywords = {
 			let: 'VariableDeclaration',
+			def: 'FunctionDeclaration',
+			return: 'ReturnDeclaration',
 		};
 	}
 
@@ -216,49 +216,19 @@ export class Tokenizer {
 	#operator() {
 		const start = this.#position();
 
+		const operator = this.char;
+
 		switch (this.char) {
-			case '+':
-				this.#next();
-
-				return {
-					type: 'PlusOperator',
-					value: '+',
-					loc: { file: this.file, start, end: this.#position() },
-				};
-
-			case '-':
-				this.#next();
-
-				return {
-					type: 'MinusOperator',
-					value: '-',
-					loc: { file: this.file, start, end: this.#position() },
-				};
-
 			case '*':
-				this.#next();
-
-				return {
-					type: 'MultiplyOperator',
-					value: '*',
-					loc: { file: this.file, start, end: this.#position() },
-				};
-
 			case '%':
-				this.#next();
-
-				return {
-					type: 'DivisionRestOperator',
-					value: '%',
-					loc: { file: this.file, start, end: this.#position() },
-				};
-
+			case '-':
+			case '+':
 			case '/':
 				this.#next();
 
 				return {
-					type: 'DivisionOperator',
-					value: '/',
+					type: 'Operator',
+					value: operator,
 					loc: { file: this.file, start, end: this.#position() },
 				};
 
