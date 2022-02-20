@@ -10,7 +10,7 @@ import { Whitespace } from './Whitespace';
 export class RegExp {
 	private value = '';
 	private tokens = {
-		'^': 'circumflex',
+		'^': 'Circumflex',
 		'\\': 'BackSlash',
 		'$': 'DollarSign',
 	} as { [key: string]: string };

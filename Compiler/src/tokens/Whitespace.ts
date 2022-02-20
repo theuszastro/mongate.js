@@ -1,7 +1,7 @@
 import { Pointer } from '../utils/Pointer';
 
 export class Whitespace {
-	private size: number = 1;
+	private size = 1;
 
 	constructor(private pointer: Pointer) {}
 

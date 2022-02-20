@@ -2,7 +2,7 @@ import { Pointer } from '../utils/Pointer';
 import { Boolean } from './Boolean';
 
 export class Identifier {
-	private value: string = '';
+	private value = '';
 	private keywords = {
 		let: 'VariableKeyword',
 		const: 'ConstantKeyword',

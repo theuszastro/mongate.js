@@ -1,7 +1,7 @@
 import { Pointer } from '../utils/Pointer';
 
 export class Boolean {
-	private value: string = '';
+	private value = '';
 
 	constructor(private pointer: Pointer) {}
 

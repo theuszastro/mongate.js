@@ -2,7 +2,7 @@ import { Pointer } from '../utils/Pointer';
 import { SyntaxError } from '../errors/SyntaxError';
 
 export class Number {
-	private value: string = '';
+	private value = '';
 
 	constructor(private pointer: Pointer) {}
 
