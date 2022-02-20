@@ -1,8 +1,0 @@
-let name = 1;
-let random = 2;
-let oi = false;
-let tudo = true
-let bem = 'oi';
-let yeaa
-
-// const oi; // error <- 

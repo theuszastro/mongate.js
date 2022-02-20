@@ -2,30 +2,22 @@ import { ParserPointer, Token } from '../utils/ParserPointer';
 import { SyntaxError } from '../errors/SyntaxError';
 import { Expression } from './Expression';
 
-export class Variable {
+export class Constant {
 	constructor(private pointer: ParserPointer, private expression: Expression) {}
 
-	variable() {
+	constant() {
 		const { pointer } = this;
 
-		if (!pointer.token || !pointer.take('VariableKeyword')) return null;
+		if (!pointer.token || !pointer.take('ConstantKeyword')) return null;
 
-		let last = 'let';
+		let last = 'const';
 
 		const name = pointer.take('Identifier');
-		if (!name) new SyntaxError(this.pointer, 'let', 'Expected a variable name', 'parser');
+		if (!name) new SyntaxError(this.pointer, 'const', 'Expected a constant name', 'parser');
 		last += ` ${name?.value}`;
 
 		const assign = pointer.take('Assignment');
-		if (!assign) {
-			pointer.take('Semicolon');
-
-			return {
-				type: 'VariableDeclaration',
-				name,
-				value: 'undefined',
-			};
-		}
+		if (!assign) new SyntaxError(this.pointer, last, 'Expected a constant value', 'parser');
 		last += `=`;
 
 		const value = this.expression.expression();
@@ -34,10 +26,8 @@ export class Variable {
 		if (this.pointer.token?.type === 'Comma')
 			new SyntaxError(this.pointer, ',', 'Unexpected comma', 'parser');
 
-		pointer.take('Semicolon');
-
 		return {
-			type: 'VariableDeclaration',
+			type: 'ConstantDeclaration',
 			name,
 			value,
 		};

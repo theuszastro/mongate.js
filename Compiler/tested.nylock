@@ -37,3 +37,9 @@ def
 # this is a comment
 // this is a comment
 return
+
+// Parser
+let name;
+let name = value;
+const name; # <- error
+const name = '';

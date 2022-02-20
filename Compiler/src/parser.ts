@@ -1,3 +1,4 @@
+import { Constant } from './parsers/Constant';
 import { Expression } from './parsers/Expression';
 import { Variable } from './parsers/Variable';
 
@@ -7,19 +8,24 @@ import { ParserPointer } from './utils/ParserPointer';
 export class Parser {
 	private parserPointer: ParserPointer;
 
-	private variable: Variable;
 	private expression: Expression;
+	private variable: Variable;
+	private constant: Constant;
 
 	constructor(private tokenizer: Tokenizer, content: string, filename: string) {
 		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
 
 		this.expression = new Expression(this.parserPointer);
 		this.variable = new Variable(this.parserPointer, this.expression);
+		this.constant = new Constant(this.parserPointer, this.expression);
 	}
 
 	private stmt() {
 		const variable = this.variable.variable();
 		if (variable) return variable;
+
+		const constant = this.constant.constant();
+		if (constant) return constant;
 	}
 
 	parse() {

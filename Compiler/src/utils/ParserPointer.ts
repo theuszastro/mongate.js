@@ -28,7 +28,6 @@ export class ParserPointer {
 				this.ident = this.token.size as number;
 
 			case 'Comment':
-			case 'Semicolon':
 				this.next();
 
 				break;
