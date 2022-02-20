@@ -34,14 +34,10 @@ export class String {
 
 		pointer.next();
 
-		if (this.value.length >= 1) {
-			return {
-				type: 'String',
-				value: this.value,
-				ctx: this.pointer.context(),
-			};
-		}
-
-		return null;
+		return {
+			type: 'String',
+			value: this.value,
+			ctx: this.pointer.context(),
+		};
 	}
 }
