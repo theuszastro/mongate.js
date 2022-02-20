@@ -13,15 +13,15 @@ export class Identifier {
 		for: 'ForKeyword',
 		if: 'IfKeyword',
 		else: 'ElseKeyword',
+		return: 'ReturnKeyword',
 	} as { [key: string]: string };
 
 	constructor(private pointer: Pointer, private boolean: Boolean) {}
 
 	private isLetter() {
-		return (
-			('a' <= this.pointer.char && this.pointer.char <= 'z') ||
-			('A' <= this.pointer.char && this.pointer.char <= 'Z')
-		);
+		const { char } = this.pointer;
+
+		return ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z');
 	}
 
 	identifier() {

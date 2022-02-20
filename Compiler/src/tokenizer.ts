@@ -60,6 +60,7 @@ export class Tokenizer {
 			this.colon.semicolon() ||
 			this.colon.colon() ||
 			this.brackets.square() ||
+			this.brackets.parenthesis() ||
 			this.comments.comments() ||
 			this.identifier.identifier() ||
 			this.string.string() ||
