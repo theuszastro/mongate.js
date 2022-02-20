@@ -1,6 +1,6 @@
 import { throws } from 'assert';
 import { Pointer } from '../utils/Pointer';
-import { SyntaxError } from '../utils/SyntaxError';
+import { SyntaxError } from '../errors/SyntaxError';
 import { Colon } from './Colon';
 import { Comments } from './Comments';
 import { Identifier } from './Identifier';
@@ -69,11 +69,15 @@ export class RegExp {
 		const allowedFlags = ['g', 'i', 'm', 'u', 'y'];
 		const flags: string[] = [];
 
+		let error = false;
+
 		for (;;) {
 			if (!pointer.char || !identifier.isLetter() || colon.semicolon()) {
-				if (/\s/.test(pointer.char)) new SyntaxError();
-
-				break;
+				if (/\s/.test(pointer.char)) {
+					error = true;
+				} else {
+					break;
+				}
 			}
 
 			if (allowedFlags.includes(pointer.char) && !flags.includes(pointer.char)) {
@@ -82,6 +86,8 @@ export class RegExp {
 
 			pointer.next();
 		}
+
+		if (error) new SyntaxError(pointer, flags.join(''), 'Unexpected identifier');
 
 		return {
 			type: 'RegExp',

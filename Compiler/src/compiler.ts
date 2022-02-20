@@ -1,8 +1,6 @@
 import { Parser } from './parser';
 import { Tokenizer } from './tokenizer';
 
-import { SyntaxError } from './utils/SyntaxError';
-
 type ConfigType = {
 	filename: string;
 	content: string;

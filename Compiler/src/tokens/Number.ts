@@ -1,5 +1,5 @@
 import { Pointer } from '../utils/Pointer';
-import { SyntaxError } from '../utils/SyntaxError';
+import { SyntaxError } from '../errors/SyntaxError';
 
 export class Number {
 	private value: string = '';
@@ -24,10 +24,11 @@ export class Number {
 		}
 
 		if (this.value.length >= 1) {
-			if (this.value.endsWith('e')) new SyntaxError();
+			if (this.value.endsWith('e'))
+				new SyntaxError(this.pointer, 'e', 'this unexpected identifier');
 
 			const isInvalid = isNaN(global.Number(this.value));
-			if (isInvalid) new SyntaxError();
+			if (isInvalid) new SyntaxError(this.pointer, this.value, 'this number is a NAN');
 
 			return {
 				type: 'Number',

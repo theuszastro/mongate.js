@@ -12,7 +12,7 @@ export class Pointer {
 
 	public char: string;
 
-	constructor(private filename: string, private content: string) {
+	constructor(private filename: string, public content: string) {
 		this.char = content[this.cursor];
 	}
 

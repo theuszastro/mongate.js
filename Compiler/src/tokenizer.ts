@@ -12,6 +12,8 @@ import { String } from './tokens/String';
 import { Whitespace } from './tokens/Whitespace';
 import { Pointer } from './utils/Pointer';
 
+import { SyntaxError } from './errors/SyntaxError';
+
 export class Tokenizer {
 	private pointer: Pointer;
 	private newline: NewLine;

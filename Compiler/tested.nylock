@@ -1,17 +1,17 @@
 // Tokens
 
-1e3;
-1e;
-1,3,4,5;
-\s (espaço);
-'oi';
-"oi";
-\n
-'a;
-'dakldwa kjawd;
-true;
-false;
-[true, false, 'random'];
+1e3
+1e
+1,3,4,5
+\s (espaço)
+'oi'
+"oi"
+\
+'a
+'dakldwa kjawd
+true
+false
+[true, false, 'random']
 let
 loop
 for
@@ -36,3 +36,4 @@ def
 .
 # this is a comment
 // this is a comment
+return
