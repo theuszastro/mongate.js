@@ -3,8 +3,19 @@ import { Pointer } from '../utils/Pointer';
 export class Colon {
 	constructor(private pointer: Pointer) {}
 
-	colon() {
+	comma() {
 		if (this.pointer.char != ',') return null;
+
+		this.pointer.next();
+
+		return {
+			type: 'Comma',
+			ctx: this.pointer.context(),
+		};
+	}
+
+	colon() {
+		if (this.pointer.char != ':') return null;
 
 		this.pointer.next();
 
