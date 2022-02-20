@@ -7,6 +7,7 @@ import { NewLine } from './tokens/NewLine';
 import { Number } from './tokens/Number';
 import { Operator } from './tokens/Operator';
 import { OperatorLogic } from './tokens/OperatorLogic';
+import { RegExp } from './tokens/RegExp';
 import { String } from './tokens/String';
 import { Whitespace } from './tokens/Whitespace';
 import { Pointer } from './utils/Pointer';
@@ -24,6 +25,7 @@ export class Tokenizer {
 	private operator: Operator;
 	private operatorLogic: OperatorLogic;
 	private comments: Comments;
+	private regexp: RegExp;
 
 	constructor(filename: string, content: string) {
 		this.pointer = new Pointer(filename, content);
@@ -40,6 +42,13 @@ export class Tokenizer {
 		this.operator = new Operator(this.pointer);
 		this.operatorLogic = new OperatorLogic(this.pointer);
 		this.comments = new Comments(this.pointer);
+		this.regexp = new RegExp(
+			this.pointer,
+			this.operator,
+			this.comments,
+			this.identifier,
+			this.colon
+		);
 	}
 
 	private endFile() {
@@ -59,13 +68,16 @@ export class Tokenizer {
 			this.whitespace.whitespace() ||
 			this.colon.semicolon() ||
 			this.colon.colon() ||
+			this.colon.comma() ||
 			this.brackets.square() ||
 			this.brackets.parenthesis() ||
+			this.regexp.regexpTokens() ||
+			this.regexp.regexp() ||
 			this.comments.comments() ||
 			this.identifier.identifier() ||
 			this.string.string() ||
-			this.boolean.boolean() ||
 			this.number.number() ||
+			this.boolean.boolean() ||
 			this.operator.operator() ||
 			this.operatorLogic.operatorLogic() ||
 			this.endFile();

@@ -10,7 +10,7 @@ export class OperatorLogic {
 		'&': 'And',
 		'<': 'LessThan',
 		'>': 'GreaterThan',
-		'?': 'Optional',
+		'?': 'OptionalChaining',
 		'.': 'Dot',
 	} as { [key: string]: string };
 

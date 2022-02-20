@@ -18,7 +18,7 @@ export class Identifier {
 
 	constructor(private pointer: Pointer, private boolean: Boolean) {}
 
-	private isLetter() {
+	isLetter() {
 		const { char } = this.pointer;
 
 		return ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z');
