@@ -18,7 +18,6 @@ export class OperatorLogic {
 		const { pointer } = this;
 
 		const operator = this.operators[pointer.char];
-
 		if (!operator) return null;
 
 		const value = pointer.char;
