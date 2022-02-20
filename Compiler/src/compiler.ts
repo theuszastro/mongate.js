@@ -7,20 +7,14 @@ type ConfigType = {
 };
 
 export class Compiler {
-	private filename: string;
-	private content: string;
-
 	private tokenizer: Tokenizer;
 	private parser: Parser;
 
 	constructor(config: ConfigType) {
 		const { filename, content } = config;
 
-		this.filename = filename;
-		this.content = content;
-
 		this.tokenizer = new Tokenizer(filename, content);
-		this.parser = new Parser(this.tokenizer);
+		this.parser = new Parser(this.tokenizer, filename, content);
 	}
 
 	run() {

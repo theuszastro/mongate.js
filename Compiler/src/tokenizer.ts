@@ -73,6 +73,7 @@ export class Tokenizer {
 			this.colon.comma() ||
 			this.brackets.square() ||
 			this.brackets.parenthesis() ||
+			this.brackets.curly() ||
 			this.regexp.regexpTokens() ||
 			this.regexp.regexp() ||
 			this.comments.comments() ||
@@ -83,8 +84,6 @@ export class Tokenizer {
 			this.operator.operator() ||
 			this.operatorLogic.operatorLogic() ||
 			this.endFile();
-
-		console.log(token);
 
 		return token;
 	}

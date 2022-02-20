@@ -1,47 +1,43 @@
-import { Tokenizer } from './tokenizer';
+import { Expression } from './parsers/Expression';
+import { Variable } from './parsers/Variable';
 
-type Token = {
-	type: string;
-	value?: string;
-	size?: number;
-	ctx: any;
-};
+import { Tokenizer } from './tokenizer';
+import { ParserPointer } from './utils/ParserPointer';
 
 export class Parser {
-	private token?: Token | null;
-	private rawTokens: Token[] = [];
-	private ident: number = 0;
+	private parserPointer: ParserPointer;
 
-	constructor(private tokenizer: Tokenizer) {}
+	private variable: Variable;
+	private expression: Expression;
 
-	next(skipWhitespace = true) {
-		this.token = this.tokenizer.nextToken();
-		if (!this.token) throw new TypeError('next token is undefined');
+	constructor(private tokenizer: Tokenizer, content: string, filename: string) {
+		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
 
-		this.rawTokens.push(this.token);
+		this.expression = new Expression(this.parserPointer);
+		this.variable = new Variable(this.parserPointer, this.expression);
+	}
 
-		switch (this.token.type) {
-			case 'Whitespace':
-				if (!skipWhitespace) {
-					this.ident = this.token.size as number;
-
-					break;
-				}
-
-			case 'Comment':
-				this.next();
-
-				break;
-		}
+	private stmt() {
+		const variable = this.variable.variable();
+		if (variable) return variable;
 	}
 
 	parse() {
-		for (;;) {
-			if (this.token) {
-				if (this.token.type == 'EndFile') break;
-			}
+		const stmts: any[] = [];
 
-			this.next();
+		this.parserPointer.next();
+
+		for (;;) {
+			if (this.parserPointer.token) {
+				if (this.parserPointer.token.type == 'EndFile') break;
+
+				const token = this.stmt();
+				if (!token) break;
+
+				stmts.push(token);
+			}
 		}
+
+		console.log(stmts);
 	}
 }
