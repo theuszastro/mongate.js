@@ -1,1 +1,4 @@
-'adaw
+let teste;
+let random, oi = 1;
+
+const oi; // error <- 

@@ -1,6 +1,11 @@
 import chalk from 'chalk';
+import { Code } from './Code';
 
-export abstract class Logger {
+export abstract class Logger extends Code {
+	constructor() {
+		super();
+	}
+
 	block(name: string) {
 		return chalk.white(`[${name}]`);
 	}

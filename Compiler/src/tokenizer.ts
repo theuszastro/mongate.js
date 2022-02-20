@@ -1,18 +1,18 @@
-import { Boolean } from './tokens/Boolean';
-import { Brackets } from './tokens/Brackets';
-import { Colon } from './tokens/Colon';
-import { Comments } from './tokens/Comments';
-import { Identifier } from './tokens/Identifier';
-import { NewLine } from './tokens/NewLine';
-import { Number } from './tokens/Number';
-import { Operator } from './tokens/Operator';
-import { OperatorLogic } from './tokens/OperatorLogic';
-import { RegExp } from './tokens/RegExp';
-import { String } from './tokens/String';
-import { Whitespace } from './tokens/Whitespace';
 import { Pointer } from './utils/Pointer';
-
-import { SyntaxError } from './errors/SyntaxError';
+import {
+	Boolean,
+	Brackets,
+	Colon,
+	Comments,
+	Identifier,
+	NewLine,
+	Number,
+	Operator,
+	OperatorLogic,
+	RegExp,
+	String,
+	Whitespace,
+} from './tokens';
 
 export class Tokenizer {
 	private pointer: Pointer;
