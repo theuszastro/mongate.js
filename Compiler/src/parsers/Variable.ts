@@ -5,6 +5,32 @@ import { Expression } from './Expression';
 export class Variable {
 	constructor(private pointer: ParserPointer, private expression: Expression) {}
 
+	variableAssignment() {
+		const { pointer } = this;
+
+		if (!pointer.token) return null;
+
+		const name = pointer.take('Identifier');
+		if (!name) return null;
+
+		if (!pointer.take('Assignment')) return null;
+
+		const value = this.expression.expression();
+		if (!value)
+			new SyntaxError(this.pointer, {
+				startLine: pointer.line,
+				lineError: pointer.line,
+				reason: 'Expected a value',
+				isParser: true,
+			});
+
+		return {
+			type: 'VariableAssignment',
+			name,
+			value,
+		};
+	}
+
 	variable() {
 		const { pointer } = this;
 

@@ -28,6 +28,9 @@ export class Parser {
 		const variable = this.variable.variable();
 		if (variable) return variable;
 
+		const variableAssignment = this.variable.variableAssignment();
+		if (variableAssignment) return variableAssignment;
+
 		const constant = this.constant.constant();
 		if (constant) return constant;
 
@@ -49,12 +52,18 @@ export class Parser {
 
 				const token = this.stmt();
 				if (!token) {
-					new SyntaxError(this.parserPointer, {
-						startLine: this.parserPointer.line,
-						lineError: this.parserPointer.line,
-						reason: `Unexpected ${this.parserPointer.token.type}`,
-						isParser: true,
-					});
+					if (this.parserPointer.token.type != 'EndFile') {
+						const { token: pToken } = this.parserPointer;
+
+						new SyntaxError(this.parserPointer, {
+							startLine: this.parserPointer.line,
+							lineError: this.parserPointer.line,
+							reason: pToken.value
+								? `Unexpected token '${pToken.value}'`
+								: `Unexpected token ${pToken.type}`,
+							isParser: true,
+						});
+					}
 
 					break;
 				}

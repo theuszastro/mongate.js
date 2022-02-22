@@ -85,6 +85,7 @@ export class Expression {
 			case 'ReturnKeyword':
 				return this.returnExpression();
 
+			case 'NullKeyword':
 			case 'String':
 			case 'Boolean':
 			case 'RegExp':

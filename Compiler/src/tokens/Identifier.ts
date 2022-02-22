@@ -19,6 +19,7 @@ export class Identifier {
 		define: 'DefineKeyword',
 		global: 'GlobalKeyword',
 		css: 'CssKeyword',
+		null: 'NullKeyword',
 	} as { [key: string]: string };
 
 	constructor(private pointer: Pointer, private boolean: Boolean) {}
@@ -26,7 +27,7 @@ export class Identifier {
 	isLetter() {
 		const { char } = this.pointer;
 
-		return ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z');
+		return ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char === '_';
 	}
 
 	identifier() {
