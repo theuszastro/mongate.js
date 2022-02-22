@@ -1,4 +1,4 @@
-import { ParserPointer, Token } from '../utils/ParserPointer';
+import { ParserPointer } from '../utils/ParserPointer';
 import { SyntaxError } from '../errors/SyntaxError';
 import { Expression } from './Expression';
 
@@ -11,12 +11,16 @@ export class Variable {
 		if (!pointer.token || !pointer.take('VariableKeyword')) return null;
 
 		const name = pointer.take('Identifier');
-		if (!name) new SyntaxError(this.pointer, 'Expected a variable name', 'parser');
+		if (!name)
+			new SyntaxError(this.pointer, {
+				startLine: pointer.line,
+				lineError: pointer.line,
+				reason: 'Expected a variable name',
+				isParser: true,
+			});
 
 		const assign = pointer.take('Assignment');
 		if (!assign) {
-			pointer.take('Semicolon');
-
 			return {
 				type: 'VariableDeclaration',
 				name,
@@ -25,12 +29,13 @@ export class Variable {
 		}
 
 		const value = this.expression.expression();
-		if (!value) new SyntaxError(this.pointer, 'Expected a variable value', 'parser');
-
-		if (this.pointer.token?.type === 'Comma')
-			new SyntaxError(this.pointer, 'Unexpected comma', 'parser');
-
-		pointer.take('Semicolon');
+		if (!value)
+			new SyntaxError(this.pointer, {
+				startLine: pointer.line,
+				lineError: pointer.line,
+				reason: 'Expected a variable value',
+				isParser: true,
+			});
 
 		return {
 			type: 'VariableDeclaration',

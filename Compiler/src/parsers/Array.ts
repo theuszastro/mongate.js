@@ -10,6 +10,7 @@ export class Array {
 
 		if (!pointer.token || !pointer.take('OpenSquare')) return null;
 
+		const startLine = pointer.line;
 		const values: Token[] = [];
 
 		if (pointer.token.type != 'CloseSquare') {
@@ -24,7 +25,12 @@ export class Array {
 				if (pointer.token.type == 'Comma') {
 					pointer.take('Comma');
 				} else if (pointer.token.type != 'CloseSquare') {
-					new SyntaxError(this.pointer, `Expected a comma`, 'parser');
+					new SyntaxError(this.pointer, {
+						lineError: pointer.line,
+						startLine,
+						reason: `Expected a comma`,
+						isParser: true,
+					});
 				}
 			}
 		}

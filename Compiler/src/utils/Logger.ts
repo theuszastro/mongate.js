@@ -11,4 +11,20 @@ export abstract class Logger {
 
 		return color(msg);
 	}
+
+	error(msg: string) {
+		return this.color('redBright', msg);
+	}
+
+	warn(msg: string) {
+		return this.color('yellow', msg);
+	}
+
+	info(msg: string) {
+		return this.color('cyan', msg);
+	}
+
+	ctx(msg: string) {
+		return this.color('white', msg);
+	}
 }

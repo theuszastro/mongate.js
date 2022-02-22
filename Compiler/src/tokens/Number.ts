@@ -25,10 +25,19 @@ export class Number {
 
 		if (this.value.length >= 1) {
 			if (this.value.endsWith('e'))
-				new SyntaxError(this.pointer, 'e', 'this unexpected identifier');
+				new SyntaxError(this.pointer, {
+					lineError: pointer.line,
+					startLine: pointer.line,
+					reason: 'this unexpected identifier',
+				});
 
 			const isInvalid = isNaN(global.Number(this.value));
-			if (isInvalid) new SyntaxError(this.pointer, this.value, 'this number is a NAN');
+			if (isInvalid)
+				new SyntaxError(this.pointer, {
+					lineError: pointer.line,
+					startLine: pointer.line,
+					reason: 'this number is a invalid',
+				});
 
 			return {
 				type: 'Number',

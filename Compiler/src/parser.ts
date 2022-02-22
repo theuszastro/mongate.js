@@ -48,14 +48,21 @@ export class Parser {
 				if (this.parserPointer.token.type == 'EndFile') break;
 
 				const token = this.stmt();
-				if (!token) break;
+				if (!token) {
+					new SyntaxError(this.parserPointer, {
+						startLine: this.parserPointer.line,
+						lineError: this.parserPointer.line,
+						reason: `Unexpected ${this.parserPointer.token.type}`,
+						isParser: true,
+					});
+
+					break;
+				}
 
 				stmts.push(token);
 			}
 		}
 
-		console.log(stmts[0]);
-		console.log(stmts[0].right);
-		console.log(stmts[0].right.right);
+		console.log(stmts);
 	}
 }

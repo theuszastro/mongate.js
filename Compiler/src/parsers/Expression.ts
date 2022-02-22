@@ -2,12 +2,15 @@ import { ParserPointer, Token } from '../utils/ParserPointer';
 import { SyntaxError } from '../errors/SyntaxError';
 
 import { Array } from './Array';
+import { _Object } from './Object';
 
 export class Expression {
 	private array: Array;
+	private object: _Object;
 
 	constructor(private pointer: ParserPointer) {
 		this.array = new Array(pointer, this);
+		this.object = new _Object(pointer, this);
 	}
 
 	private parenBinaryExpression() {
@@ -26,7 +29,7 @@ export class Expression {
 		};
 	}
 
-	private BinaryExpression(left: Token) {
+	private binaryExpression(left: Token) {
 		const { pointer } = this;
 
 		const operator = pointer.take('Operator');
@@ -34,9 +37,12 @@ export class Expression {
 
 		const right = this.expression();
 		if (!right || !allowedExpr.includes((right as Token).type))
-			new SyntaxError(pointer, 'Expected a right expression', 'parser');
-
-		pointer.take('Semicolon');
+			new SyntaxError(pointer, {
+				startLine: pointer.line,
+				lineError: pointer.line,
+				reason: 'Expected a right expression',
+				isParser: true,
+			});
 
 		return {
 			type: 'BinaryExpression',
@@ -54,8 +60,6 @@ export class Expression {
 		pointer.take('ReturnKeyword');
 		const value = this.expression();
 
-		pointer.take('Semicolon');
-
 		return {
 			type: 'ReturnExpression',
 			value: value ? (value as Token) : 'undefined',
@@ -69,14 +73,17 @@ export class Expression {
 		if (!token) return null;
 
 		switch (token.type) {
-			case 'ReturnKeyword':
-				return this.returnExpression();
+			case 'OpenCurly':
+				return this.object.object();
 
 			case 'OpenSquare':
 				return this.array.array();
 
 			case 'OpenParen':
 				return this.parenBinaryExpression();
+
+			case 'ReturnKeyword':
+				return this.returnExpression();
 
 			case 'String':
 			case 'Boolean':
@@ -93,7 +100,7 @@ export class Expression {
 				pointer.next();
 
 				if (pointer.token?.type === 'Operator') {
-					return this.BinaryExpression(left);
+					return this.binaryExpression(left);
 				}
 
 				return left;

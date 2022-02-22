@@ -10,18 +10,33 @@ export class Constant {
 
 		if (!pointer.token || !pointer.take('ConstantKeyword')) return null;
 
+		const errObj = {
+			startLine: pointer.line,
+			lineError: pointer.line,
+			isParser: true,
+			reason: '',
+		};
+
 		const name = pointer.take('Identifier');
-		if (!name) new SyntaxError(this.pointer, 'Expected a constant name', 'parser');
+		if (!name) {
+			errObj['reason'] = 'Expected a constant name';
+
+			new SyntaxError(this.pointer, errObj);
+		}
 
 		const assign = pointer.take('Assignment');
-		if (!assign) new SyntaxError(this.pointer, 'Expected a constant value', 'parser');
+		if (!assign) {
+			errObj['reason'] = 'Expected a constant value';
+
+			new SyntaxError(this.pointer, errObj);
+		}
 
 		const value = this.expression.expression();
-		if (!value) new SyntaxError(this.pointer, 'Expected a variable value', 'parser');
+		if (!value) {
+			errObj['reason'] = 'Expected a variable value';
 
-		if (pointer.take('Comma')) new SyntaxError(this.pointer, 'Unexpected comma', 'parser');
-
-		pointer.take('Semicolon');
+			new SyntaxError(this.pointer, errObj);
+		}
 
 		return {
 			type: 'ConstantDeclaration',

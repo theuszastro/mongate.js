@@ -6,18 +6,18 @@ type Memorized = {
 };
 
 export class Pointer {
-	private line = 1;
 	private column = 1;
 	private cursor = 0;
 
+	public line = 1;
 	public char: string;
 
 	constructor(private filename: string, private content: string) {
 		this.char = content[this.cursor];
 	}
 
-	getLine() {
-		return this.content.split('\n')[this.line - 1];
+	getLine(line: number) {
+		return this.content.split('\n')[line];
 	}
 
 	context() {

@@ -4,47 +4,78 @@ import { Pointer } from '../utils/Pointer';
 
 type ErrorLog = {
 	filename: string;
-	content: string;
+	lines: ErrorLine[];
+};
+
+type ErrorLine = {
 	line: number;
+	content: string;
+};
+
+type ErrorData = {
+	startLine: number;
+	lineError: number;
+	reason: string;
+	isParser?: boolean;
 };
 
 export class SyntaxError extends Logger {
-	constructor(private pointer: Pointer | ParserPointer, private error: string, type?: 'parser') {
+	constructor(private pointer: Pointer | ParserPointer, private data: ErrorData) {
 		super();
 
-		if (type === 'parser') {
-			this.setupParser();
-		} else {
-			this.setup();
+		const { isParser = false } = data;
+
+		isParser ? this.setupParser() : this.setup();
+	}
+
+	private getLines(start: number) {
+		const lines: ErrorLine[] = [];
+
+		for (let i of [0, 1, 2, 3, 4, 5, 6, 8, 9]) {
+			const content = this.pointer.getLine(start - 1 + i);
+			if (content === undefined) break;
+
+			lines.push({
+				line: start + i,
+				content,
+			});
 		}
+
+		return lines;
 	}
 
 	private logError(data: ErrorLog) {
-		const { filename, line, content } = data;
+		const { filename } = data;
 		const { block } = this;
 
-		const error = (msg: string) => this.color('redBright', msg);
-		const warn = (msg: string) => this.color('yellow', msg);
-		const info = (msg: string) => this.color('cyan', msg);
-		const ctx = (msg: string) => this.color('white', msg);
+		const { lineError, startLine } = this.data;
 
-		const currentLine = !Boolean(content) ? `in ${warn(`line ${line}`)}` : '';
+		let currentLine = `in ${this.warn(`line ${lineError}`)},`;
+		if (startLine != lineError) currentLine += ` start in ${this.warn(`line ${startLine}`)}`;
 
-		console.log(block(error('Error')), ctx(`SyntaxError on ${error(filename)} ${currentLine}`));
-		Boolean(content) && console.log(block(warn(`Line ${line}`)), ctx(content));
-		console.log(block(info('Info')), ctx(this.error));
+		console.log(
+			block(this.error('Error')),
+			this.ctx(`SyntaxError on ${this.error(filename)} ${currentLine}`)
+		);
+
+		for (let { line, content } of data.lines) {
+			const lineWarn = this.warn('Line ' + line);
+
+			console.log(block(lineWarn), content);
+		}
+
+		console.log(block(this.info('Info')), this.ctx(this.data.reason));
 	}
 
 	private setupParser() {
 		this.pointer = this.pointer as ParserPointer;
 
 		const { pointer } = this;
-		const { line, content } = pointer.getLine();
+		const { startLine } = this.data;
 
 		this.logError({
 			filename: pointer.filename,
-			content,
-			line,
+			lines: this.getLines(startLine),
 		});
 
 		process.exit(1);
@@ -54,14 +85,11 @@ export class SyntaxError extends Logger {
 		this.pointer = this.pointer as Pointer;
 
 		const { pointer } = this;
-
-		const { line, file: filename } = pointer.context();
-		const content = pointer.getLine();
+		const { file: filename } = pointer.context();
 
 		this.logError({
 			filename,
-			content,
-			line,
+			lines: this.getLines(this.data.startLine),
 		});
 
 		process.exit(1);

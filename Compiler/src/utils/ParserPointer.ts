@@ -1,3 +1,4 @@
+import { SyntaxError } from '../errors/SyntaxError';
 import { Tokenizer } from '../tokenizer';
 
 export type Token = {
@@ -37,6 +38,7 @@ export class ParserPointer {
 
 		switch (this.token.type) {
 			case 'Whitespace':
+			case 'Semicolon':
 			case 'Comment':
 				this.next();
 
@@ -51,11 +53,8 @@ export class ParserPointer {
 		}
 	}
 
-	getLine() {
-		return {
-			content: this.content.split('\n')[this.line - 1],
-			line: this.line,
-		};
+	getLine(line: number) {
+		return this.content.split('\n')[line];
 	}
 
 	take(type: string) {

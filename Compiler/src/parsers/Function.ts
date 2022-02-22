@@ -1,11 +1,10 @@
-import { takeCoverage } from 'v8';
 import { SyntaxError } from '../errors/SyntaxError';
 import { ParserPointer, Token } from '../utils/ParserPointer';
 
 export class _Function {
 	constructor(private pointer: ParserPointer, private stmts: Function) {}
 
-	private functionArgs() {
+	private functionArgs(line: number) {
 		const { pointer } = this;
 
 		if (!pointer.token) return null;
@@ -24,9 +23,13 @@ export class _Function {
 			if (!next || next.type === 'EndFile') break;
 
 			if (pointer.token.type == 'Comma') {
-				if (next.type != 'Identifier') {
-					new SyntaxError(this.pointer, `Expected a identifier`, 'parser');
-				}
+				if (next.type != 'Identifier')
+					new SyntaxError(this.pointer, {
+						lineError: pointer.line,
+						startLine: line,
+						reason: 'Expected a valid function argument',
+						isParser: true,
+					});
 
 				pointer.take('Comma');
 			}
@@ -35,7 +38,7 @@ export class _Function {
 		return args;
 	}
 
-	private functionBody() {
+	private functionBody(line: number) {
 		const { pointer } = this;
 		if (!pointer.token) return null;
 
@@ -43,7 +46,12 @@ export class _Function {
 
 		for (;;) {
 			if (!pointer.token || pointer.take('EndFile'))
-				new SyntaxError(this.pointer, 'Expected a end', 'parser');
+				new SyntaxError(this.pointer, {
+					lineError: pointer.line,
+					startLine: line,
+					reason: 'Expected a end function',
+					isParser: true,
+				});
 
 			if (pointer.take('EndKeyword')) break;
 
@@ -59,11 +67,19 @@ export class _Function {
 
 		if (!pointer.token || !pointer.take('FunctionKeyword')) return null;
 
-		const name = pointer.take('Identifier');
-		if (!name) new SyntaxError(this.pointer, 'Expected a function name', 'parser');
+		const line = pointer.line;
 
-		const args = this.functionArgs();
-		const body = this.functionBody();
+		const name = pointer.take('Identifier');
+		if (!name)
+			new SyntaxError(this.pointer, {
+				lineError: pointer.line,
+				startLine: line,
+				reason: 'Expected a function name',
+				isParser: true,
+			});
+
+		const args = this.functionArgs(line);
+		const body = this.functionBody(line);
 
 		return {
 			type: 'FunctionDeclaration',
