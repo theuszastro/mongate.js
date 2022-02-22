@@ -16,12 +16,15 @@ export class Variable {
 		if (!pointer.take('Assignment')) return null;
 
 		const value = this.expression.expression();
-		if (!value)
+		if (!value || value.type == 'ReturnExpression')
 			new SyntaxError(this.pointer, {
 				startLine: pointer.line,
 				lineError: pointer.line,
-				reason: 'Expected a value',
 				isParser: true,
+				reason:
+					value && value.type == 'ReturnExpression'
+						? 'Expected a valid variable value'
+						: 'Expected a variable value',
 			});
 
 		return {
@@ -55,12 +58,15 @@ export class Variable {
 		}
 
 		const value = this.expression.expression();
-		if (!value)
+		if (!value || value.type == 'ReturnExpression')
 			new SyntaxError(this.pointer, {
 				startLine: pointer.line,
 				lineError: pointer.line,
-				reason: 'Expected a variable value',
 				isParser: true,
+				reason:
+					value && value.type == 'ReturnExpression'
+						? 'Expected a valid variable value'
+						: 'Expected a variable value',
 			});
 
 		return {
