@@ -29,7 +29,7 @@ export class Brackets {
 			pointer.next();
 
 			return {
-				type: char === '[' ? 'OpenParenthesis' : 'CloseParenthesis',
+				type: char === '(' ? 'OpenParen' : 'CloseParen',
 				ctx: pointer.context(),
 			};
 		}

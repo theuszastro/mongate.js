@@ -10,13 +10,33 @@ export class Expression {
 		this.array = new Array(pointer, this);
 	}
 
+	private parenBinaryExpression() {
+		const { pointer } = this;
+
+		pointer.take('OpenParen');
+
+		const binary = this.expression();
+		if (!binary) return null;
+
+		pointer.take('CloseParen');
+
+		return {
+			...binary,
+			type: 'ParenBinaryExpression',
+		};
+	}
+
 	private BinaryExpression(left: Token) {
 		const { pointer } = this;
 
 		const operator = pointer.take('Operator');
+		const allowedExpr = ['Number', 'Identifier', 'ParenBinaryExpression'];
 
 		const right = this.expression();
-		if (!right) new SyntaxError(pointer, 'Expected a right expression', 'parser');
+		if (!right || !allowedExpr.includes((right as Token).type))
+			new SyntaxError(pointer, 'Expected a right expression', 'parser');
+
+		pointer.take('Semicolon');
 
 		return {
 			type: 'BinaryExpression',
@@ -54,6 +74,9 @@ export class Expression {
 
 			case 'OpenSquare':
 				return this.array.array();
+
+			case 'OpenParen':
+				return this.parenBinaryExpression();
 
 			case 'String':
 			case 'Boolean':

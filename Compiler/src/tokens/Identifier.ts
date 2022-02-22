@@ -16,6 +16,9 @@ export class Identifier {
 		return: 'ReturnKeyword',
 		class: 'ClassKeyword',
 		end: 'EndKeyword',
+		define: 'DefineKeyword',
+		global: 'GlobalKeyword',
+		css: 'CssKeyword',
 	} as { [key: string]: string };
 
 	constructor(private pointer: Pointer, private boolean: Boolean) {}

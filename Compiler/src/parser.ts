@@ -55,5 +55,7 @@ export class Parser {
 		}
 
 		console.log(stmts[0]);
+		console.log(stmts[0].right);
+		console.log(stmts[0].right.right);
 	}
 }
