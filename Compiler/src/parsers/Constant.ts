@@ -1,9 +1,14 @@
 import { ParserPointer, Token } from '../utils/ParserPointer';
 import { SyntaxError } from '../errors/SyntaxError';
 import { Expression } from './Expression';
+import { Identifier } from '../tokens';
 
 export class Constant {
-	constructor(private pointer: ParserPointer, private expression: Expression) {}
+	private keywords: string[] = [];
+
+	constructor(private pointer: ParserPointer, private expression: Expression) {
+		this.keywords = Object.values(Identifier.keywords);
+	}
 
 	constant() {
 		const { pointer } = this;
@@ -19,7 +24,9 @@ export class Constant {
 
 		const name = pointer.take('Identifier');
 		if (!name) {
-			errObj['reason'] = 'Expected a constant name';
+			errObj['reason'] = this.keywords.includes(pointer.token.type)
+				? 'this name is a keyword'
+				: 'Expected a constant name';
 
 			new SyntaxError(this.pointer, errObj);
 		}

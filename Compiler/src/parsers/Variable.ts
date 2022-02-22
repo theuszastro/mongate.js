@@ -1,9 +1,14 @@
 import { ParserPointer } from '../utils/ParserPointer';
 import { SyntaxError } from '../errors/SyntaxError';
 import { Expression } from './Expression';
+import { Identifier } from '../tokens';
 
 export class Variable {
-	constructor(private pointer: ParserPointer, private expression: Expression) {}
+	private keywords: string[] = [];
+
+	constructor(private pointer: ParserPointer, private expression: Expression) {
+		this.keywords = Object.values(Identifier.keywords);
+	}
 
 	variableAssignment() {
 		const { pointer } = this;
@@ -44,7 +49,9 @@ export class Variable {
 			new SyntaxError(this.pointer, {
 				startLine: pointer.line,
 				lineError: pointer.line,
-				reason: 'Expected a variable name',
+				reason: this.keywords.includes(pointer.token.type)
+					? 'this name is a keyword'
+					: 'Expected a variable name',
 				isParser: true,
 			});
 

@@ -57,8 +57,6 @@ export class Identifier {
 
 			const keywordOrExpr = Identifier.keywords[this.value] ?? this.exprs[this.value];
 			if (keywordOrExpr) {
-				console.log(keywordOrExpr);
-
 				return {
 					type: keywordOrExpr,
 					ctx: pointer.context(),
