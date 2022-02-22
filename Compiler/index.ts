@@ -10,7 +10,5 @@ import { Compiler } from './src/compiler';
 		filename: 'data.nylock',
 	});
 
-	//     'oi';
-	// "tudo bem?";
 	compiler.run();
 })();

@@ -54,6 +54,6 @@ export class Parser {
 			}
 		}
 
-		console.log(stmts);
+		console.log(stmts[0]);
 	}
 }

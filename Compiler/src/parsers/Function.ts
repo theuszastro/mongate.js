@@ -11,15 +11,9 @@ export class _Function {
 		if (!pointer.token) return null;
 
 		const args: Token[] = [];
-		const currentLine = pointer.line;
 
 		for (;;) {
 			if (!pointer.token) break;
-			// if (!['Comma', 'Identifier'].includes(pointer.token?.type)) {
-			// 	if (pointer.line >= currentLine) break;
-
-			// 	new SyntaxError(this.pointer, `Unexpected a ${pointer.token?.type}`, 'parser');
-			// }
 
 			const arg = pointer.take('Identifier');
 			if (!arg) break;

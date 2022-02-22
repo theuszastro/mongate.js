@@ -1,4 +1,5 @@
-import { ParserPointer } from '../utils/ParserPointer';
+import { ParserPointer, Token } from '../utils/ParserPointer';
+import { SyntaxError } from '../errors/SyntaxError';
 import { Expression } from './Expression';
 
 export class Array {
@@ -7,7 +8,26 @@ export class Array {
 	array() {
 		const { pointer } = this;
 
-		return null;
+		if (!pointer.token || !pointer.take('OpenSquare')) return null;
+
+		const values: Token[] = [];
+
+		if (pointer.token.type != 'CloseSquare') {
+			while (pointer.token.type != 'CloseSquare') {
+				if (!pointer.token || pointer.token.type == 'EndFile') break;
+
+				const value = this.expression.expression();
+				if (!value) break;
+
+				values.push(value as Token);
+
+				if (pointer.token.type == 'Comma') {
+					pointer.take('Comma');
+				} else if (pointer.token.type != 'CloseSquare') {
+					new SyntaxError(this.pointer, `Expected a comma`, 'parser');
+				}
+			}
+		}
 
 		return {
 			type: 'Array',

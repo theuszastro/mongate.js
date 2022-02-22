@@ -35,7 +35,6 @@ export class Expression {
 		const value = this.expression();
 
 		pointer.take('Semicolon');
-		pointer.take('NewLine');
 
 		return {
 			type: 'ReturnExpression',
@@ -54,7 +53,16 @@ export class Expression {
 				return this.returnExpression();
 
 			case 'OpenSquare':
-				return null;
+				return this.array.array();
+
+			case 'String':
+			case 'Boolean':
+			case 'RegExp':
+				const _token = token;
+
+				pointer.next();
+
+				return _token;
 
 			case 'Identifier':
 			case 'Number':
@@ -66,15 +74,6 @@ export class Expression {
 				}
 
 				return left;
-
-			case 'String':
-			case 'Boolean':
-			case 'RegExp':
-				const _token = token;
-
-				pointer.next();
-
-				return _token;
 		}
 
 		return null;

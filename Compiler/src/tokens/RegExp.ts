@@ -87,7 +87,7 @@ export class RegExp {
 			pointer.next();
 		}
 
-		if (error) new SyntaxError(pointer, flags.join(''), 'Unexpected identifier');
+		if (error) new SyntaxError(pointer, 'Unexpected identifier');
 
 		return {
 			type: 'RegExp',
