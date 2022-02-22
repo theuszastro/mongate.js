@@ -15,6 +15,7 @@ export class Identifier {
 		else: 'ElseKeyword',
 		return: 'ReturnKeyword',
 		class: 'ClassKeyword',
+		end: 'EndKeyword',
 	} as { [key: string]: string };
 
 	constructor(private pointer: Pointer, private boolean: Boolean) {}

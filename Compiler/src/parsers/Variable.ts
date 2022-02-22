@@ -10,11 +10,8 @@ export class Variable {
 
 		if (!pointer.token || !pointer.take('VariableKeyword')) return null;
 
-		let last = 'let';
-
 		const name = pointer.take('Identifier');
-		if (!name) new SyntaxError(this.pointer, 'let', 'Expected a variable name', 'parser');
-		last += ` ${name?.value}`;
+		if (!name) new SyntaxError(this.pointer, 'Expected a variable name', 'parser');
 
 		const assign = pointer.take('Assignment');
 		if (!assign) {
@@ -26,13 +23,12 @@ export class Variable {
 				value: 'undefined',
 			};
 		}
-		last += `=`;
 
 		const value = this.expression.expression();
-		if (!value) new SyntaxError(this.pointer, last, 'Expected a variable value', 'parser');
+		if (!value) new SyntaxError(this.pointer, 'Expected a variable value', 'parser');
 
 		if (this.pointer.token?.type === 'Comma')
-			new SyntaxError(this.pointer, ',', 'Unexpected comma', 'parser');
+			new SyntaxError(this.pointer, 'Unexpected comma', 'parser');
 
 		pointer.take('Semicolon');
 

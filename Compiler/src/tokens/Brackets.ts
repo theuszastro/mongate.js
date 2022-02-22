@@ -46,7 +46,7 @@ export class Brackets {
 			pointer.next();
 
 			return {
-				type: char === '[' ? 'OpenSquareBracket' : 'CloseSquareBracket',
+				type: char === '[' ? 'OpenSquare' : 'CloseSquare',
 				ctx: pointer.context(),
 			};
 		}

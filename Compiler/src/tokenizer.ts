@@ -13,6 +13,8 @@ import {
 	String,
 	Whitespace,
 } from './tokens';
+import { type } from 'os';
+import { Token } from './utils/ParserPointer';
 
 export class Tokenizer {
 	private pointer: Pointer;
@@ -62,6 +64,27 @@ export class Tokenizer {
 		}
 
 		return null;
+	}
+
+	previewNext() {
+		const memorized = this.pointer.memorize();
+
+		let token: Token | null = null;
+
+		for (;;) {
+			token = this.nextToken();
+			if (!token) break;
+
+			if (['Whitespace', 'Comment'].includes(token.type)) {
+				continue;
+			}
+
+			break;
+		}
+
+		this.pointer.restore(memorized);
+
+		return token;
 	}
 
 	nextToken() {

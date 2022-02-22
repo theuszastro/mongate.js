@@ -2,20 +2,32 @@ import { Tokenizer } from '../tokenizer';
 
 export type Token = {
 	type: string;
-	value?: string;
+	value?: string | Token;
 	size?: number;
 	flags?: string;
-	ctx: any;
+	values?: Token[];
+	body?: Token[];
+	left?: Token;
+	right?: Token;
+	Operator?: Token;
+	ctx?: {
+		file: string;
+		line: number;
+		column: number;
+	};
 };
 
 export class ParserPointer {
 	public token?: Token | null = null;
 	public rawTokens: Token[] = [];
-	public ident = 0;
 
-	private line = 1;
+	public line = 1;
 
 	constructor(private tokenizer: Tokenizer, public filename: string, private content: string) {}
+
+	previewNext() {
+		return this.tokenizer.previewNext();
+	}
 
 	next() {
 		this.token = this.tokenizer.nextToken();
@@ -25,8 +37,6 @@ export class ParserPointer {
 
 		switch (this.token.type) {
 			case 'Whitespace':
-				this.ident = this.token.size as number;
-
 			case 'Comment':
 				this.next();
 
@@ -43,7 +53,7 @@ export class ParserPointer {
 
 	getLine() {
 		return {
-			lineContent: this.content.split('\n')[this.line - 1],
+			content: this.content.split('\n')[this.line - 1],
 			line: this.line,
 		};
 	}

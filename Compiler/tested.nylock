@@ -43,3 +43,15 @@ let name;
 let name = value;
 const name; # <- error
 const name = '';
+
+def calc a, b, c
+    def sayName
+        let tudo = 2;
+
+        let ee = 2;
+    end
+    
+    let oi = b;
+
+    return a + b + c;
+end

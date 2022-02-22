@@ -1,5 +1,7 @@
+import { SyntaxError } from './errors/SyntaxError';
 import { Constant } from './parsers/Constant';
 import { Expression } from './parsers/Expression';
+import { _Function } from './parsers/Function';
 import { Variable } from './parsers/Variable';
 
 import { Tokenizer } from './tokenizer';
@@ -11,6 +13,7 @@ export class Parser {
 	private expression: Expression;
 	private variable: Variable;
 	private constant: Constant;
+	private function: _Function;
 
 	constructor(private tokenizer: Tokenizer, content: string, filename: string) {
 		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
@@ -18,6 +21,7 @@ export class Parser {
 		this.expression = new Expression(this.parserPointer);
 		this.variable = new Variable(this.parserPointer, this.expression);
 		this.constant = new Constant(this.parserPointer, this.expression);
+		this.function = new _Function(this.parserPointer, this.stmt.bind(this));
 	}
 
 	private stmt() {
@@ -26,6 +30,12 @@ export class Parser {
 
 		const constant = this.constant.constant();
 		if (constant) return constant;
+
+		const func = this.function.functionDeclaration();
+		if (func) return func;
+
+		const expr = this.expression.expression();
+		if (expr) return expr;
 	}
 
 	parse() {
