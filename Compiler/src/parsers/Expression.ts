@@ -95,6 +95,8 @@ export class Expression {
 
 				return _token;
 
+			case 'NullExpr':
+			case 'UndefinedExpr':
 			case 'Identifier':
 			case 'Number':
 				const left = token;

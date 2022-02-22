@@ -11,8 +11,8 @@ export class Variable {
 		if (!pointer.token) return null;
 
 		const name = pointer.take('Identifier');
-		if (!name) return null;
 
+		if (!name) return null;
 		if (!pointer.take('Assignment')) return null;
 
 		const value = this.expression.expression();

@@ -3,7 +3,12 @@ import { Boolean } from './Boolean';
 
 export class Identifier {
 	private value = '';
-	private keywords = {
+	private exprs = {
+		null: 'NullExpr',
+		undefined: 'UndefinedExpr',
+	} as { [key: string]: string };
+
+	static keywords = {
 		let: 'VariableKeyword',
 		const: 'ConstantKeyword',
 		def: 'FunctionKeyword',
@@ -16,10 +21,14 @@ export class Identifier {
 		return: 'ReturnKeyword',
 		class: 'ClassKeyword',
 		end: 'EndKeyword',
-		define: 'DefineKeyword',
-		global: 'GlobalKeyword',
-		css: 'CssKeyword',
-		null: 'NullKeyword',
+		// react
+		// define: 'DefineKeyword',
+		// global: 'GlobalKeyword',
+		// css: 'CssKeyword',
+		// component: 'ComponentKeyword',
+		// prop: 'PropKeyword',
+		// state: 'StateKeyword',
+		// ref: 'EefKeyword',
 	} as { [key: string]: string };
 
 	constructor(private pointer: Pointer, private boolean: Boolean) {}
@@ -46,10 +55,12 @@ export class Identifier {
 				return this.boolean.boolean(this.value);
 			}
 
-			const keyword = this.keywords[this.value];
-			if (keyword) {
+			const keywordOrExpr = Identifier.keywords[this.value] ?? this.exprs[this.value];
+			if (keywordOrExpr) {
+				console.log(keywordOrExpr);
+
 				return {
-					type: keyword,
+					type: keywordOrExpr,
 					ctx: pointer.context(),
 				};
 			}
