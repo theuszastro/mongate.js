@@ -26,19 +26,30 @@ export class ParserPointer {
 
 	constructor(private tokenizer: Tokenizer, public filename: string, private content: string) {}
 
-	previewNext() {
-		return this.tokenizer.previewNext();
+	previewNext(skipNewline = true, skipWhiteSpace = true) {
+		return this.tokenizer.previewNext(skipNewline, skipWhiteSpace);
 	}
 
-	next() {
+	next(skipSemicolon = true, skipWhiteSpace = true) {
 		this.token = this.tokenizer.nextToken();
-		if (!this.token) throw new TypeError('next token is undefined');
+
+		if (!this.token) {
+			throw new TypeError('next token is undefined');
+		}
 
 		this.rawTokens.push(this.token);
 
 		switch (this.token.type) {
-			case 'Whitespace':
 			case 'Semicolon':
+				if (!skipSemicolon) {
+					break;
+				}
+
+			case 'Whitespace':
+				if (!skipWhiteSpace) {
+					break;
+				}
+
 			case 'Comment':
 				this.next();
 

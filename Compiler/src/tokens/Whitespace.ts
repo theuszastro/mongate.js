@@ -23,7 +23,7 @@ export class Whitespace {
 
 		return {
 			type: 'Whitespace',
-			size: this.size,
+			value: ' '.repeat(this.size),
 			ctx: this.pointer.context(),
 		};
 	}

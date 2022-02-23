@@ -3,17 +3,15 @@ import {
 	Boolean,
 	Brackets,
 	Colon,
-	Comments,
 	Identifier,
 	NewLine,
 	Number,
 	Operator,
 	OperatorLogic,
-	RegExp,
-	String,
 	Whitespace,
+	Others,
 } from './tokens';
-import { type } from 'os';
+
 import { Token } from './utils/ParserPointer';
 
 export class Tokenizer {
@@ -22,14 +20,12 @@ export class Tokenizer {
 	private colon: Colon;
 	private whitespace: Whitespace;
 	private identifier: Identifier;
-	private string: String;
 	private number: Number;
 	private boolean: Boolean;
 	private brackets: Brackets;
 	private operator: Operator;
 	private operatorLogic: OperatorLogic;
-	private comments: Comments;
-	private regexp: RegExp;
+	private others: Others;
 
 	constructor(filename: string, content: string) {
 		this.pointer = new Pointer(filename, content);
@@ -38,21 +34,13 @@ export class Tokenizer {
 		this.colon = new Colon(this.pointer);
 		this.whitespace = new Whitespace(this.pointer);
 
-		this.string = new String(this.pointer);
 		this.number = new Number(this.pointer);
 		this.boolean = new Boolean(this.pointer);
 		this.brackets = new Brackets(this.pointer);
 		this.identifier = new Identifier(this.pointer, this.boolean);
 		this.operator = new Operator(this.pointer);
 		this.operatorLogic = new OperatorLogic(this.pointer);
-		this.comments = new Comments(this.pointer);
-		this.regexp = new RegExp(
-			this.pointer,
-			this.operator,
-			this.comments,
-			this.identifier,
-			this.colon
-		);
+		this.others = new Others(this.pointer);
 	}
 
 	private endFile() {
@@ -66,7 +54,7 @@ export class Tokenizer {
 		return null;
 	}
 
-	previewNext() {
+	previewNext(skipNewline = true, skipWhiteSpace = true) {
 		const memorized = this.pointer.memorize();
 
 		let token: Token | null = null;
@@ -75,9 +63,8 @@ export class Tokenizer {
 			token = this.nextToken();
 			if (!token) break;
 
-			if (['Whitespace', 'Comment'].includes(token.type)) {
-				continue;
-			}
+			if (skipWhiteSpace && ['Whitespace'].includes(token.type)) continue;
+			if (skipNewline && token.type === 'NewLine') continue;
 
 			break;
 		}
@@ -97,15 +84,12 @@ export class Tokenizer {
 			this.brackets.square() ||
 			this.brackets.parenthesis() ||
 			this.brackets.curly() ||
-			this.regexp.regexpTokens() ||
-			this.regexp.regexp() ||
-			this.comments.comments() ||
-			this.identifier.identifier() ||
-			this.string.string() ||
-			this.number.number() ||
-			this.boolean.boolean() ||
 			this.operator.operator() ||
 			this.operatorLogic.operatorLogic() ||
+			this.identifier.identifier() ||
+			this.number.number() ||
+			this.boolean.boolean() ||
+			this.others.others() ||
 			this.endFile();
 
 		return token;

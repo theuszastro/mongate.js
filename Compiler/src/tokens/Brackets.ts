@@ -13,6 +13,7 @@ export class Brackets {
 
 			return {
 				type: char === '{' ? 'OpenCurly' : 'CloseCurly',
+				value: char,
 				ctx: pointer.context(),
 			};
 		}
@@ -30,6 +31,7 @@ export class Brackets {
 
 			return {
 				type: char === '(' ? 'OpenParen' : 'CloseParen',
+				value: char,
 				ctx: pointer.context(),
 			};
 		}
@@ -47,6 +49,7 @@ export class Brackets {
 
 			return {
 				type: char === '[' ? 'OpenSquare' : 'CloseSquare',
+				value: char,
 				ctx: pointer.context(),
 			};
 		}

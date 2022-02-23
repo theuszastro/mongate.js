@@ -35,6 +35,16 @@ export class Array {
 			}
 		}
 
+		const close = pointer.take('CloseSquare');
+		if (!close) {
+			new SyntaxError(this.pointer, {
+				lineError: pointer.line,
+				startLine,
+				reason: `Expected a ']'`,
+				isParser: true,
+			});
+		}
+
 		return {
 			type: 'Array',
 			values,

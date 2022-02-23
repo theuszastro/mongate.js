@@ -33,7 +33,7 @@ export class Identifier {
 
 	constructor(private pointer: Pointer, private boolean: Boolean) {}
 
-	isLetter() {
+	isChar() {
 		const { char } = this.pointer;
 
 		return ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char === '_';
@@ -42,10 +42,10 @@ export class Identifier {
 	identifier() {
 		const { pointer } = this;
 
-		if (this.isLetter()) {
+		if (this.isChar()) {
 			this.value = '';
 
-			while (this.isLetter()) {
+			while (this.isChar()) {
 				this.value += pointer.char;
 
 				pointer.next();
@@ -59,6 +59,7 @@ export class Identifier {
 			if (keywordOrExpr) {
 				return {
 					type: keywordOrExpr,
+					value: this.value,
 					ctx: pointer.context(),
 				};
 			}

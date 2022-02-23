@@ -1,7 +1,9 @@
 import { SyntaxError } from './errors/SyntaxError';
+import { Comments } from './parsers/Comments';
 import { Constant } from './parsers/Constant';
 import { Expression } from './parsers/Expression';
 import { _Function } from './parsers/Function';
+
 import { Variable } from './parsers/Variable';
 
 import { Tokenizer } from './tokenizer';
@@ -11,6 +13,8 @@ export class Parser {
 	private parserPointer: ParserPointer;
 
 	private expression: Expression;
+
+	private comments: Comments;
 	private variable: Variable;
 	private constant: Constant;
 	private function: _Function;
@@ -19,12 +23,17 @@ export class Parser {
 		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
 
 		this.expression = new Expression(this.parserPointer);
+
 		this.variable = new Variable(this.parserPointer, this.expression);
 		this.constant = new Constant(this.parserPointer, this.expression);
 		this.function = new _Function(this.parserPointer, this.stmt.bind(this));
+		this.comments = new Comments(this.parserPointer);
 	}
 
 	private stmt() {
+		const comment = this.comments.hashtag() || this.comments.comment();
+		if (comment) return comment;
+
 		const variable = this.variable.variable();
 		if (variable) return variable;
 
@@ -72,6 +81,6 @@ export class Parser {
 			}
 		}
 
-		console.log(stmts);
+		console.log(stmts[0]);
 	}
 }

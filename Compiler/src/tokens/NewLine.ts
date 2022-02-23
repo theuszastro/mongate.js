@@ -11,6 +11,7 @@ export class NewLine {
 
 		return {
 			type: 'NewLine',
+			value: '\n',
 			ctx: this.pointer.context(),
 		};
 	}

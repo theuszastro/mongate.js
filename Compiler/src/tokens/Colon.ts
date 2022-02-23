@@ -10,6 +10,7 @@ export class Colon {
 
 		return {
 			type: 'Comma',
+			value: ',',
 			ctx: this.pointer.context(),
 		};
 	}
@@ -21,6 +22,7 @@ export class Colon {
 
 		return {
 			type: 'Colon',
+			value: ':',
 			ctx: this.pointer.context(),
 		};
 	}
@@ -32,6 +34,7 @@ export class Colon {
 
 		return {
 			type: 'Semicolon',
+			value: ';',
 			ctx: this.pointer.context(),
 		};
 	}

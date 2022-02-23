@@ -32,6 +32,15 @@ export class _Function {
 					});
 
 				pointer.take('Comma');
+			} else {
+				if (pointer.token.type === 'Identifier') {
+					new SyntaxError(this.pointer, {
+						lineError: pointer.line,
+						startLine: line,
+						reason: `Expected a ','`,
+						isParser: true,
+					});
+				}
 			}
 		}
 
