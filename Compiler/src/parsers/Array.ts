@@ -15,7 +15,8 @@ export class Array {
 
 		if (pointer.token.type != 'CloseSquare') {
 			for (;;) {
-				if (!pointer.token || pointer.token.type == 'EndFile') break;
+				if (!pointer.token || ['CloseSquare', 'EndFile'].includes(pointer.token.type))
+					break;
 
 				let value = this.expression.expression();
 				if (!value) {
@@ -27,22 +28,26 @@ export class Array {
 
 				values.push(value as Token);
 
-				if (pointer.token.type == 'CloseSquare') break;
-
-				const next = pointer.previewNext();
-
 				if (!pointer.take('Comma')) {
-					console.log(pointer.token);
-					console.log(next);
+					if (pointer.token.type == 'CloseSquare') continue;
 
-					if (next && next.type != 'CloseSquare') {
+					const lineError = pointer.line - 1;
+
+					const value = this.expression.expression(true);
+					if (!value)
 						new SyntaxError(this.pointer, {
 							lineError: pointer.line,
-							startLine,
-							reason: `Expected a ',' or ']'`,
+							startLine: pointer.line,
+							reason: `Expected a ']'`,
 							isParser: true,
 						});
-					}
+
+					new SyntaxError(this.pointer, {
+						lineError,
+						startLine,
+						reason: `Expected a ','`,
+						isParser: true,
+					});
 
 					continue;
 				}

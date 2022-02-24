@@ -1,3 +1,13 @@
+{
+    'name': 'Matheus',
+    "age": 17,
+    sex: 'Masculino',
+    properties: [
+        { name: 'Car', type: 'Sportive', year: 2020 },
+        { name: 'Car', type: 'Common', year: 2020 }
+    
+}
+
 def name a = [1, 'olá',,,,,], c
     return a + b;
 end
