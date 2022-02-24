@@ -31,7 +31,7 @@ export class SyntaxError extends Logger {
 		if (value > 0) {
 			for (let i of [1, 2, 3, 4, 5].reverse()) {
 				const lineNumber = value - i;
-				if (lineNumber <= 0) break;
+				if (lineNumber < 0) continue;
 
 				const line = this.pointer.getLine(lineNumber);
 				if (line === undefined) continue;
@@ -50,7 +50,6 @@ export class SyntaxError extends Logger {
 
 		for (let i of [1, 2, 3, 4, 5]) {
 			const lineNumber = value + i;
-			if (lineNumber <= 0) break;
 
 			const line = this.pointer.getLine(lineNumber);
 			if (line === undefined) continue;
