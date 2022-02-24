@@ -60,8 +60,6 @@ export class _Function {
 						reason: `Unexpected a '${pointer.token.value}'`,
 					});
 
-				console.log('comma', arg);
-
 				pointer.take('Comma');
 
 				break;
@@ -115,7 +113,21 @@ export class _Function {
 	functionDeclaration() {
 		const { pointer } = this;
 
-		if (!pointer.token || !pointer.take('FunctionKeyword')) return null;
+		if (!pointer.token || !['FunctionKeyword', 'AsyncKeyword'].includes(pointer.token.type))
+			return null;
+
+		const isAsync = pointer.token.type == 'AsyncKeyword';
+		if (isAsync) {
+			pointer.take('AsyncKeyword');
+
+			if (!pointer.token || pointer.token.type != 'FunctionKeyword')
+				new SyntaxError(pointer, {
+					lineError: pointer.line,
+					reason: 'Expected a function declaration',
+				});
+
+			pointer.take('FunctionKeyword');
+		}
 
 		const name = pointer.take('Identifier');
 		if (!name)
@@ -128,7 +140,7 @@ export class _Function {
 		const body = this.functionBody();
 
 		return {
-			type: 'FunctionDeclaration',
+			type: isAsync ? 'AsyncFunctionDeclaration' : 'FunctionDeclaration',
 			name,
 			args,
 			body,

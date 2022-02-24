@@ -79,8 +79,7 @@ export class Parser {
 			}
 		}
 
-		console.log(stmts[0].args);
-		console.log(stmts[0].body);
+		console.log(stmts);
 
 		return {
 			filename: this.filename,
