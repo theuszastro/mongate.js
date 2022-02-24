@@ -38,7 +38,6 @@ export class _Function {
 				arg.default = value as Token;
 
 				const next = pointer.previewNext();
-
 				if ((pointer.token.type as string) == 'Comma') {
 					if (!next || next.type != 'Identifier')
 						new SyntaxError(pointer, {
@@ -60,6 +59,8 @@ export class _Function {
 						lineError: pointer.line,
 						reason: `Unexpected a '${pointer.token.value}'`,
 					});
+
+				console.log('comma', arg);
 
 				pointer.take('Comma');
 

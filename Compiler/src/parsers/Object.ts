@@ -40,11 +40,11 @@ export class _Object {
 			const property = this.readProperty();
 			if (!property) break;
 
-			const next = pointer.previewNext();
-
 			const colon = pointer.take('Colon');
 			if (!colon) {
-				if (next?.type === 'Comma' || next?.type === 'CloseCurly') {
+				if (pointer.token?.type === 'Comma' || pointer.token?.type === 'CloseCurly') {
+					pointer.take('Comma');
+
 					continue;
 				}
 

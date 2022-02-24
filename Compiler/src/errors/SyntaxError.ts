@@ -26,18 +26,17 @@ export class SyntaxError extends Logger {
 
 	private getLines(start: number) {
 		const lines: ErrorLine[] = [];
-		const value = start - 1;
 
-		if (value > 0) {
+		if (start > 0) {
 			for (let i of [1, 2, 3, 4, 5].reverse()) {
-				const lineNumber = value - i;
+				const lineNumber = start - i;
 				if (lineNumber < 0) continue;
 
 				const line = this.pointer.getLine(lineNumber);
 				if (line === undefined) continue;
 
 				lines.push({
-					line: lineNumber + 1,
+					line: lineNumber,
 					content: line,
 				});
 			}
@@ -45,17 +44,17 @@ export class SyntaxError extends Logger {
 
 		lines.push({
 			line: start,
-			content: this.pointer.getLine(value),
+			content: this.pointer.getLine(start),
 		});
 
 		for (let i of [1, 2, 3, 4, 5]) {
-			const lineNumber = value + i;
+			const lineNumber = start + i;
 
 			const line = this.pointer.getLine(lineNumber);
 			if (line === undefined) continue;
 
 			lines.push({
-				line: lineNumber + 1,
+				line: lineNumber,
 				content: line,
 			});
 		}

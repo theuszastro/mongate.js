@@ -105,6 +105,7 @@ export class Expression {
 			case 'OpenParen':
 				return this.parenBinaryExpression();
 
+			case 'Boolean':
 			case 'NullExpr':
 			case 'UndefinedExpr':
 				const _token = token;

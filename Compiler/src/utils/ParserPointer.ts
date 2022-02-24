@@ -68,7 +68,7 @@ export class ParserPointer {
 	}
 
 	getLine(line: number) {
-		return this.content.split('\n')[line];
+		return this.content.split('\n')[line - 1];
 	}
 
 	take(type: string) {

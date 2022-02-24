@@ -19,7 +19,7 @@ export class Parser {
 	private constant: Constant;
 	private function: _Function;
 
-	constructor(private tokenizer: Tokenizer, content: string, filename: string) {
+	constructor(private tokenizer: Tokenizer, private content: string, private filename: string) {
 		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
 
 		this.expression = new Expression(this.parserPointer);
@@ -65,12 +65,10 @@ export class Parser {
 						const { token: pToken } = this.parserPointer;
 
 						new SyntaxError(this.parserPointer, {
-							startLine: this.parserPointer.line,
 							lineError: this.parserPointer.line,
 							reason: pToken.value
 								? `Unexpected token '${pToken.value}'`
 								: `Unexpected token ${pToken.type}`,
-							isParser: true,
 						});
 					}
 
@@ -81,6 +79,13 @@ export class Parser {
 			}
 		}
 
-		console.log(stmts[0]);
+		console.log(stmts[0].args);
+		console.log(stmts[0].body);
+
+		return {
+			filename: this.filename,
+			content: this.content,
+			tokens: stmts,
+		};
 	}
 }
