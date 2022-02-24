@@ -30,8 +30,6 @@ export class _Object {
 		const { pointer } = this;
 		if (!pointer.token) return null;
 
-		const startLine = pointer.line;
-
 		pointer.take('OpenCurly');
 
 		const properties: Token[] = [];
@@ -52,19 +50,15 @@ export class _Object {
 
 				new SyntaxError(pointer, {
 					lineError,
-					startLine,
 					reason: `Expected a ':'`,
-					isParser: true,
 				});
 			}
 
 			const value = this.readValue();
 			if (!value)
 				new SyntaxError(this.pointer, {
-					startLine,
 					lineError,
 					reason: 'Expected a value',
-					isParser: true,
 				});
 
 			if (!pointer.take('Comma')) {
@@ -72,9 +66,7 @@ export class _Object {
 				if (property) {
 					new SyntaxError(pointer, {
 						lineError,
-						startLine,
 						reason: `Expected a ','`,
-						isParser: true,
 					});
 				}
 			}

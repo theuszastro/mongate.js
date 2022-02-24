@@ -19,17 +19,14 @@ export class String {
 		if (!token || !['DoubleQuote', 'SingleQuote'].includes(token.type)) return null;
 
 		const delimiter = token;
-		const startLine = pointer.line;
 
 		pointer.take(delimiter.type);
 
 		for (;;) {
 			if (!pointer.token || ['EndFile', 'NewLine'].includes(pointer.token.type))
 				new SyntaxError(pointer, {
-					startLine,
 					lineError: pointer.line - 1,
 					reason: `Expected a '${delimiter.value}'`,
-					isParser: true,
 				});
 
 			const expr = others.others();

@@ -13,28 +13,53 @@ type ErrorLine = {
 };
 
 type ErrorData = {
-	startLine: number;
 	lineError: number;
 	reason: string;
-	isParser?: boolean;
 };
 
 export class SyntaxError extends Logger {
-	constructor(private pointer: Pointer | ParserPointer, private data: ErrorData) {
+	constructor(private pointer: ParserPointer, private data: ErrorData) {
 		super();
 
-		const { isParser = false } = data;
-
-		isParser ? this.setupParser() : this.setup();
+		this.setup();
 	}
 
 	private getLines(start: number) {
-		const lines: ErrorLine[] = [
-			{
-				line: start,
-				content: this.pointer.getLine(start - 1),
-			},
-		];
+		const lines: ErrorLine[] = [];
+		const value = start - 1;
+
+		if (value > 0) {
+			for (let i of [1, 2, 3, 4, 5].reverse()) {
+				const lineNumber = value - i;
+				if (lineNumber <= 0) break;
+
+				const line = this.pointer.getLine(lineNumber);
+				if (line === undefined) continue;
+
+				lines.push({
+					line: lineNumber + 1,
+					content: line,
+				});
+			}
+		}
+
+		lines.push({
+			line: start,
+			content: this.pointer.getLine(value),
+		});
+
+		for (let i of [1, 2, 3, 4, 5]) {
+			const lineNumber = value + i;
+			if (lineNumber <= 0) break;
+
+			const line = this.pointer.getLine(lineNumber);
+			if (line === undefined) continue;
+
+			lines.push({
+				line: lineNumber + 1,
+				content: line,
+			});
+		}
 
 		return lines;
 	}
@@ -61,29 +86,15 @@ export class SyntaxError extends Logger {
 		console.log(block(this.info('Info')), this.ctx(this.data.reason));
 	}
 
-	private setupParser() {
+	private setup() {
 		this.pointer = this.pointer as ParserPointer;
 
 		const { pointer } = this;
-		const { startLine } = this.data;
+		const { lineError } = this.data;
 
 		this.logError({
 			filename: pointer.filename,
-			lines: this.getLines(startLine),
-		});
-
-		process.exit(1);
-	}
-
-	private setup() {
-		this.pointer = this.pointer as Pointer;
-
-		const { pointer } = this;
-		const { file: filename } = pointer.context();
-
-		this.logError({
-			filename,
-			lines: this.getLines(this.data.startLine),
+			lines: this.getLines(lineError),
 		});
 
 		process.exit(1);

@@ -29,9 +29,7 @@ export class Number {
 		if (this.value.endsWith('e'))
 			new SyntaxError(this.pointer, {
 				lineError: pointer.line,
-				startLine: pointer.line,
 				reason: `Unexpected 'e'`,
-				isParser: true,
 			});
 
 		return {

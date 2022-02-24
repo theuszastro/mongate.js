@@ -23,9 +23,8 @@ export class Variable {
 		const value = this.expression.expression();
 		if (!value || value.type == 'ReturnExpression')
 			new SyntaxError(this.pointer, {
-				startLine: pointer.line,
 				lineError: pointer.line,
-				isParser: true,
+
 				reason:
 					value && value.type == 'ReturnExpression'
 						? 'Expected a valid variable value'
@@ -47,12 +46,10 @@ export class Variable {
 		const name = pointer.take('Identifier');
 		if (!name)
 			new SyntaxError(this.pointer, {
-				startLine: pointer.line,
 				lineError: pointer.line,
 				reason: this.keywords.includes(pointer.token.type)
 					? 'this name is a keyword'
 					: 'Expected a variable name',
-				isParser: true,
 			});
 
 		const assign = pointer.take('Assignment');
@@ -67,9 +64,7 @@ export class Variable {
 		const value = this.expression.expression(true);
 		if (!value)
 			new SyntaxError(this.pointer, {
-				startLine: pointer.line,
 				lineError: pointer.line,
-				isParser: true,
 				reason: 'Expected a valid variable value',
 			});
 

@@ -28,27 +28,20 @@ export class Expression {
 
 		pointer.take('OpenParen');
 
-		const startLine = pointer.line;
-
 		const binary = this.expression();
 		const allowedExpr = ['Number', 'Identifier', 'ParenBinaryExpression', 'BinaryExpression'];
 
-		if (!binary || !allowedExpr.includes(binary.type)) {
+		if (!binary || !allowedExpr.includes(binary.type))
 			new SyntaxError(pointer, {
-				startLine: pointer.line,
 				lineError: pointer.line,
 				reason: 'Expected a right paren expression',
-				isParser: true,
 			});
-		}
 
 		const close = pointer.take('CloseParen');
 		if (!close)
 			new SyntaxError(pointer, {
-				startLine,
 				lineError: pointer.line,
 				reason: "Expected a ')'",
-				isParser: true,
 			});
 
 		return {
@@ -66,10 +59,8 @@ export class Expression {
 		const right = this.expression();
 		if (!right || !allowedExpr.includes((right as Token).type))
 			new SyntaxError(pointer, {
-				startLine: pointer.line,
 				lineError: pointer.line,
 				reason: 'Expected a right expression',
-				isParser: true,
 			});
 
 		return {

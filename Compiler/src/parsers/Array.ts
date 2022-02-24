@@ -10,7 +10,6 @@ export class Array {
 
 		if (!pointer.token || !pointer.take('OpenSquare')) return null;
 
-		const startLine = pointer.line;
 		const values: Token[] = [];
 
 		if (pointer.token.type != 'CloseSquare') {
@@ -37,16 +36,12 @@ export class Array {
 					if (!value)
 						new SyntaxError(this.pointer, {
 							lineError: pointer.line,
-							startLine: pointer.line,
 							reason: `Expected a ']'`,
-							isParser: true,
 						});
 
 					new SyntaxError(this.pointer, {
 						lineError,
-						startLine,
 						reason: `Expected a ','`,
-						isParser: true,
 					});
 
 					continue;
@@ -58,9 +53,7 @@ export class Array {
 		if (!close) {
 			new SyntaxError(this.pointer, {
 				lineError: pointer.line,
-				startLine,
 				reason: `Expected a ']'`,
-				isParser: true,
 			});
 		}
 

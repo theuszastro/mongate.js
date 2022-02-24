@@ -9,7 +9,7 @@ export class _Function {
 		private expression: Expression
 	) {}
 
-	private functionReadArg(line: number) {
+	private functionReadArg() {
 		const { pointer } = this;
 
 		if (!pointer.token) return null;
@@ -31,9 +31,7 @@ export class _Function {
 				if (!value) {
 					new SyntaxError(pointer, {
 						lineError: pointer.line,
-						startLine: line,
 						reason: 'Expected a default param value',
-						isParser: true,
 					});
 				}
 
@@ -45,9 +43,7 @@ export class _Function {
 					if (!next || next.type != 'Identifier')
 						new SyntaxError(pointer, {
 							lineError: pointer.line,
-							startLine: line,
 							reason: `Unexpected a '${pointer.token.value}'`,
-							isParser: true,
 						});
 
 					pointer.take('Comma');
@@ -62,9 +58,7 @@ export class _Function {
 				if (!next || next.type != 'Identifier')
 					new SyntaxError(pointer, {
 						lineError: pointer.line,
-						startLine: line,
 						reason: `Unexpected a '${pointer.token.value}'`,
-						isParser: true,
 					});
 
 				pointer.take('Comma');
@@ -76,7 +70,7 @@ export class _Function {
 		return arg;
 	}
 
-	private functionArgs(line: number) {
+	private functionArgs() {
 		const { pointer } = this;
 
 		if (!pointer.token) return null;
@@ -86,7 +80,7 @@ export class _Function {
 		for (;;) {
 			if (!pointer.token) break;
 
-			const arg = this.functionReadArg(line);
+			const arg = this.functionReadArg();
 			if (!arg) break;
 
 			args.push(arg);
@@ -95,7 +89,7 @@ export class _Function {
 		return args;
 	}
 
-	private functionBody(line: number) {
+	private functionBody() {
 		const { pointer } = this;
 		if (!pointer.token) return null;
 
@@ -105,9 +99,7 @@ export class _Function {
 			if (!pointer.token || pointer.take('EndFile'))
 				new SyntaxError(this.pointer, {
 					lineError: pointer.line,
-					startLine: line,
 					reason: 'Expected a end function',
-					isParser: true,
 				});
 
 			if (pointer.take('EndKeyword')) break;
@@ -124,19 +116,15 @@ export class _Function {
 
 		if (!pointer.token || !pointer.take('FunctionKeyword')) return null;
 
-		const line = pointer.line;
-
 		const name = pointer.take('Identifier');
 		if (!name)
 			new SyntaxError(this.pointer, {
 				lineError: pointer.line,
-				startLine: line,
 				reason: 'Expected a function name',
-				isParser: true,
 			});
 
-		const args = this.functionArgs(line);
-		const body = this.functionBody(line);
+		const args = this.functionArgs();
+		const body = this.functionBody();
 
 		return {
 			type: 'FunctionDeclaration',

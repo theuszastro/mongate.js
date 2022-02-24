@@ -8,6 +8,3 @@
     
 }
 
-def name a = [1, 'olá',,,,,], c
-    return a + b;
-end
