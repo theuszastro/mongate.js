@@ -1,8 +1,80 @@
 import { SyntaxError } from '../errors/SyntaxError';
 import { ParserPointer, Token } from '../utils/ParserPointer';
+import { Expression } from './Expression';
 
 export class _Function {
-	constructor(private pointer: ParserPointer, private stmts: Function) {}
+	constructor(
+		private pointer: ParserPointer,
+		private stmts: Function,
+		private expression: Expression
+	) {}
+
+	private functionReadArg(line: number) {
+		const { pointer } = this;
+
+		if (!pointer.token) return null;
+
+		const name = pointer.take('Identifier');
+		if (!name) return null;
+
+		const arg = {
+			type: 'FunctionParam',
+			name,
+			default: 'undefined',
+		} as Token;
+
+		switch (pointer.token.type) {
+			case 'Assignment': {
+				pointer.take('Assignment');
+
+				const value = this.expression.expression(true);
+				if (!value) {
+					new SyntaxError(pointer, {
+						lineError: pointer.line,
+						startLine: line,
+						reason: 'Expected a default param value',
+						isParser: true,
+					});
+				}
+
+				arg.default = value as Token;
+
+				const next = pointer.previewNext();
+
+				if ((pointer.token.type as string) == 'Comma') {
+					if (!next || next.type != 'Identifier')
+						new SyntaxError(pointer, {
+							lineError: pointer.line,
+							startLine: line,
+							reason: `Unexpected a '${pointer.token.value}'`,
+							isParser: true,
+						});
+
+					pointer.take('Comma');
+				}
+
+				break;
+			}
+
+			case 'Comma': {
+				const next = pointer.previewNext();
+
+				if (!next || next.type != 'Identifier')
+					new SyntaxError(pointer, {
+						lineError: pointer.line,
+						startLine: line,
+						reason: `Unexpected a '${pointer.token.value}'`,
+						isParser: true,
+					});
+
+				pointer.take('Comma');
+
+				break;
+			}
+		}
+
+		return arg;
+	}
 
 	private functionArgs(line: number) {
 		const { pointer } = this;
@@ -14,34 +86,10 @@ export class _Function {
 		for (;;) {
 			if (!pointer.token) break;
 
-			const arg = pointer.take('Identifier');
+			const arg = this.functionReadArg(line);
 			if (!arg) break;
 
-			args.push(arg as Token);
-
-			const next = pointer.previewNext();
-			if (!next || next.type === 'EndFile') break;
-
-			if (pointer.token.type == 'Comma') {
-				if (next.type != 'Identifier')
-					new SyntaxError(this.pointer, {
-						lineError: pointer.line,
-						startLine: line,
-						reason: 'Expected a valid function argument',
-						isParser: true,
-					});
-
-				pointer.take('Comma');
-			} else {
-				if (pointer.token.type === 'Identifier') {
-					new SyntaxError(this.pointer, {
-						lineError: pointer.line,
-						startLine: line,
-						reason: `Expected a ','`,
-						isParser: true,
-					});
-				}
-			}
+			args.push(arg);
 		}
 
 		return args;

@@ -1,3 +1,5 @@
+import removeAccents from 'remove-accents';
+
 import { Pointer } from '../utils/Pointer';
 import { Boolean } from './Boolean';
 
@@ -28,15 +30,22 @@ export class Identifier {
 		// component: 'ComponentKeyword',
 		// prop: 'PropKeyword',
 		// state: 'StateKeyword',
-		// ref: 'EefKeyword',
+		// ref: 'RefKeyword',
+		// memo: 'MemoKeyword',
+		// callback: 'CallbackKeyword',
 	} as { [key: string]: string };
 
 	constructor(private pointer: Pointer, private boolean: Boolean) {}
 
 	isChar() {
 		const { char } = this.pointer;
+		if (!char) return null;
 
-		return ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char === '_';
+		return (
+			('a' <= removeAccents(char) && removeAccents(char) <= 'z') ||
+			('A' <= removeAccents(char) && removeAccents(char) <= 'Z') ||
+			char === '_'
+		);
 	}
 
 	identifier() {

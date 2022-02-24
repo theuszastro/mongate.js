@@ -94,11 +94,11 @@ export class Expression {
 		};
 	}
 
-	expression(): Token | null {
+	private value() {
 		const { pointer } = this;
-		let { token } = pointer;
+		if (!pointer.token) return null;
 
-		if (!token) return null;
+		let { token } = pointer;
 
 		switch (token.type) {
 			case 'SingleQuote':
@@ -114,12 +114,8 @@ export class Expression {
 			case 'OpenParen':
 				return this.parenBinaryExpression();
 
-			case 'ReturnKeyword':
-				return this.returnExpression();
-
 			case 'NullExpr':
 			case 'UndefinedExpr':
-			case 'Boolean':
 				const _token = token;
 
 				pointer.next();
@@ -144,8 +140,28 @@ export class Expression {
 				if (token.value === '/') {
 					return this.regexp.regexp();
 				}
-		}
 
-		return null;
+			default:
+				return null;
+		}
+	}
+
+	private allExprs() {
+		const { pointer } = this;
+		if (!pointer.token) return null;
+
+		let { token } = pointer;
+
+		switch (token.type) {
+			case 'ReturnKeyword':
+				return this.returnExpression();
+
+			default:
+				return this.value();
+		}
+	}
+
+	expression(isValue = false): Token | null {
+		return isValue ? this.value() : this.allExprs();
 	}
 }

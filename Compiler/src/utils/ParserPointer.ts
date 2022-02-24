@@ -11,6 +11,7 @@ export type Token = {
 	left?: Token;
 	right?: Token;
 	Operator?: Token;
+	default?: string | Token;
 	ctx?: {
 		file: string;
 		line: number;
@@ -30,7 +31,7 @@ export class ParserPointer {
 		return this.tokenizer.previewNext(skipNewline, skipWhiteSpace);
 	}
 
-	next(skipSemicolon = true, skipWhiteSpace = true) {
+	next(skipSemicolon = true, skipWhiteSpace = true, skipNewline = true) {
 		this.token = this.tokenizer.nextToken();
 
 		if (!this.token) {
@@ -58,7 +59,9 @@ export class ParserPointer {
 			case 'NewLine':
 				this.line++;
 
-				this.next();
+				if (skipNewline) {
+					this.next();
+				}
 
 				break;
 		}

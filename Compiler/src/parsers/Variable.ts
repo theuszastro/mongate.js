@@ -64,16 +64,13 @@ export class Variable {
 			};
 		}
 
-		const value = this.expression.expression();
-		if (!value || value.type == 'ReturnExpression')
+		const value = this.expression.expression(true);
+		if (!value)
 			new SyntaxError(this.pointer, {
 				startLine: pointer.line,
 				lineError: pointer.line,
 				isParser: true,
-				reason:
-					value && value.type == 'ReturnExpression'
-						? 'Expected a valid variable value'
-						: 'Expected a variable value',
+				reason: 'Expected a valid variable value',
 			});
 
 		return {

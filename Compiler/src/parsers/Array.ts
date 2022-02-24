@@ -14,23 +14,37 @@ export class Array {
 		const values: Token[] = [];
 
 		if (pointer.token.type != 'CloseSquare') {
-			while (pointer.token.type != 'CloseSquare') {
+			for (;;) {
 				if (!pointer.token || pointer.token.type == 'EndFile') break;
 
-				const value = this.expression.expression();
-				if (!value) break;
+				let value = this.expression.expression();
+				if (!value) {
+					value = {
+						type: 'UndefinedExpr',
+						value: 'undefined',
+					};
+				}
 
 				values.push(value as Token);
 
-				if (pointer.token.type == 'Comma') {
-					pointer.take('Comma');
-				} else if (pointer.token.type != 'CloseSquare') {
-					new SyntaxError(this.pointer, {
-						lineError: pointer.line,
-						startLine,
-						reason: `Expected a comma`,
-						isParser: true,
-					});
+				if (pointer.token.type == 'CloseSquare') break;
+
+				const next = pointer.previewNext();
+
+				if (!pointer.take('Comma')) {
+					console.log(pointer.token);
+					console.log(next);
+
+					if (next && next.type != 'CloseSquare') {
+						new SyntaxError(this.pointer, {
+							lineError: pointer.line,
+							startLine,
+							reason: `Expected a ',' or ']'`,
+							isParser: true,
+						});
+					}
+
+					continue;
 				}
 			}
 		}

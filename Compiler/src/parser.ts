@@ -26,7 +26,7 @@ export class Parser {
 
 		this.variable = new Variable(this.parserPointer, this.expression);
 		this.constant = new Constant(this.parserPointer, this.expression);
-		this.function = new _Function(this.parserPointer, this.stmt.bind(this));
+		this.function = new _Function(this.parserPointer, this.stmt.bind(this), this.expression);
 		this.comments = new Comments(this.parserPointer);
 	}
 

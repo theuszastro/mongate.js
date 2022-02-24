@@ -38,7 +38,7 @@ export class Constant {
 			new SyntaxError(this.pointer, errObj);
 		}
 
-		const value = this.expression.expression();
+		const value = this.expression.expression(true);
 		if (!value) {
 			errObj['reason'] = 'Expected a variable value';
 

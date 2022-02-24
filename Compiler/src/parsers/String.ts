@@ -24,10 +24,10 @@ export class String {
 		pointer.take(delimiter.type);
 
 		for (;;) {
-			if (!pointer.token || pointer.token.type == 'EndFile')
+			if (!pointer.token || ['EndFile', 'NewLine'].includes(pointer.token.type))
 				new SyntaxError(pointer, {
 					startLine,
-					lineError: pointer.line,
+					lineError: pointer.line - 1,
 					reason: `Expected a '${delimiter.value}'`,
 					isParser: true,
 				});
@@ -41,7 +41,7 @@ export class String {
 
 			if (pointer.token?.type === delimiter.type) break;
 
-			pointer.next();
+			pointer.next(true, true, false);
 		}
 
 		pointer.take(delimiter.type);
