@@ -7,7 +7,7 @@ import { _Function } from './parsers/Function';
 import { Variable } from './parsers/Variable';
 
 import { Tokenizer } from './tokenizer';
-import { ParserPointer } from './utils/ParserPointer';
+import { ParserPointer, Token } from './utils/ParserPointer';
 
 export class Parser {
 	private parserPointer: ParserPointer;
@@ -51,21 +51,23 @@ export class Parser {
 	}
 
 	parse() {
-		const stmts: any[] = [];
+		const { parserPointer } = this;
 
-		this.parserPointer.next();
+		const stmts: Token[] = [];
+
+		parserPointer.next();
 
 		for (;;) {
-			if (this.parserPointer.token) {
-				if (this.parserPointer.token.type == 'EndFile') break;
+			if (parserPointer.token) {
+				if (parserPointer.token.type == 'EndFile') break;
 
 				const token = this.stmt();
 				if (!token) {
-					if (this.parserPointer.token.type != 'EndFile') {
-						const { token: pToken } = this.parserPointer;
+					if (parserPointer.token.type != 'EndFile') {
+						const { token: pToken } = parserPointer;
 
-						new SyntaxError(this.parserPointer, {
-							lineError: this.parserPointer.line,
+						new SyntaxError(parserPointer, {
+							lineError: parserPointer.line,
 							reason: pToken.value
 								? `Unexpected token '${pToken.value}'`
 								: `Unexpected token ${pToken.type}`,
@@ -75,7 +77,7 @@ export class Parser {
 					break;
 				}
 
-				stmts.push(token);
+				stmts.push(token as Token);
 			}
 		}
 
