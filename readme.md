@@ -2,7 +2,7 @@
 
 ### Compiled to JavaScript
 
-##### Features:
+#### Features:
 
 -   [ ] **Suport to Next.js**
--   [ ] **Suport to React-native**
+-   [ ] **Custom modules**
