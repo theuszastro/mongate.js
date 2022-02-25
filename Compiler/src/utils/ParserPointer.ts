@@ -1,4 +1,3 @@
-import { SyntaxError } from '../errors/SyntaxError';
 import { Tokenizer } from '../tokenizer';
 
 export type Token = {
@@ -12,6 +11,7 @@ export type Token = {
 	right?: Token;
 	operator?: Token;
 	default?: string | Token;
+	variables?: Array<{ name: string | Token; value: string | Token }>;
 	ctx?: {
 		file: string;
 		line: number;

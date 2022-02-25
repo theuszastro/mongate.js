@@ -81,7 +81,8 @@ export class Parser {
 			}
 		}
 
-		console.log(stmts);
+		// @ts-ignore
+		console.log(stmts[0].variables);
 
 		return {
 			filename: this.filename,
