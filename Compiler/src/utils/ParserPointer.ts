@@ -10,7 +10,7 @@ export type Token = {
 	body?: Token[];
 	left?: Token;
 	right?: Token;
-	Operator?: Token;
+	operator?: Token;
 	default?: string | Token;
 	ctx?: {
 		file: string;
@@ -71,11 +71,11 @@ export class ParserPointer {
 		return this.content.split('\n')[line - 1];
 	}
 
-	take(type: string) {
+	take(type: string, skipSemicolon?: boolean, skipWhiteSpace?: boolean, skipNewline?: boolean) {
 		if (this.token && this.token.type === type) {
 			const _token = this.token;
 
-			this.next();
+			this.next(skipSemicolon, skipWhiteSpace, skipNewline);
 
 			return _token;
 		}
