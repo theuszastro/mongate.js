@@ -6,6 +6,7 @@ import { _Object } from './Object';
 import { RegExp } from './RegExp';
 import { Number } from './Number';
 import { String } from './String';
+import { Comments } from './Comments';
 
 export class Expression {
 	private array: Array;
@@ -14,7 +15,7 @@ export class Expression {
 	private number: Number;
 	private string: String;
 
-	constructor(private pointer: ParserPointer) {
+	constructor(private pointer: ParserPointer, private comments: Comments) {
 		this.array = new Array(pointer, this);
 		this.object = new _Object(pointer, this);
 
@@ -53,10 +54,22 @@ export class Expression {
 	private binaryExpression(left: Token) {
 		const { pointer } = this;
 
+		const next = pointer.previewNext();
+
+		if (
+			next &&
+			next.type === 'Operator' &&
+			next.value === '/' &&
+			pointer.token?.type === 'Operator' &&
+			pointer.token?.value === '/'
+		) {
+			return left;
+		}
+
 		const operator = pointer.take('Operator');
 		const allowedExpr = ['Number', 'Identifier', 'ParenBinaryExpression', 'BinaryExpression'];
 
-		const right = this.expression();
+		const right = this.expression(true);
 		if (!right || !allowedExpr.includes((right as Token).type))
 			new SyntaxError(pointer, {
 				lineError: pointer.line,

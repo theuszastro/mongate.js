@@ -3,6 +3,7 @@ import { Comments } from './parsers/Comments';
 import { Constant } from './parsers/Constant';
 import { Expression } from './parsers/Expression';
 import { _Function } from './parsers/Function';
+import { Loops } from './parsers/Loops';
 
 import { Variable } from './parsers/Variable';
 
@@ -17,15 +18,17 @@ export class Parser {
 	private variable: Variable;
 	private constant: Constant;
 	private function: _Function;
+	private loops: Loops;
 
 	constructor(private tokenizer: Tokenizer, private content: string, private filename: string) {
 		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
-		this.expression = new Expression(this.parserPointer);
 
+		this.comments = new Comments(this.parserPointer);
+		this.expression = new Expression(this.parserPointer, this.comments);
+		this.loops = new Loops(this.parserPointer, this.stmt.bind(this));
 		this.variable = new Variable(this.parserPointer, this.expression);
 		this.constant = new Constant(this.parserPointer, this.expression);
 		this.function = new _Function(this.parserPointer, this.stmt.bind(this), this.expression);
-		this.comments = new Comments(this.parserPointer);
 	}
 
 	private stmt() {
@@ -43,6 +46,9 @@ export class Parser {
 
 		const func = this.function.functionDeclaration();
 		if (func) return func;
+
+		const loops = this.loops.loop();
+		if (loops) return loops;
 
 		const expr = this.expression.expression();
 		if (expr) return expr;
@@ -80,7 +86,7 @@ export class Parser {
 		}
 
 		// @ts-ignore
-		console.log(stmts[0].variables);
+		console.log(stmts[0]);
 
 		return {
 			filename: this.filename,

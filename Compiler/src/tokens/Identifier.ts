@@ -23,7 +23,8 @@ export class Identifier {
 		return: 'ReturnKeyword',
 		class: 'ClassKeyword',
 		end: 'EndKeyword',
-
+		break: 'BreakKeyword',
+		continue: 'ContinueKeyword',
 		// react
 		// define: 'DefineKeyword',
 		// global: 'GlobalKeyword',

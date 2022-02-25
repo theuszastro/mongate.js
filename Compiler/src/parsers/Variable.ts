@@ -97,6 +97,7 @@ export class Variable {
 			}
 
 			const assign = pointer.take('Assignment');
+
 			if (!assign) {
 				variables.push({
 					name: name as Token,
