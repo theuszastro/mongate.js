@@ -20,6 +20,8 @@ export class String {
 
 		const delimiter = token;
 
+		this.value = '';
+
 		pointer.take(delimiter.type);
 
 		for (;;) {
@@ -37,6 +39,8 @@ export class String {
 			}
 
 			if (pointer.token?.type === delimiter.type) break;
+
+			this.value += pointer.token?.value;
 
 			pointer.next(true, true, false);
 		}
