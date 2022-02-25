@@ -1,28 +1,29 @@
 import { SyntaxError } from './errors/SyntaxError';
-
 import { Comments } from './parsers/Comments';
+import { Constant } from './parsers/Constant';
 import { Expression } from './parsers/Expression';
 import { _Function } from './parsers/Function';
-import { VariableAndConstant } from './parsers/VariableAndConstant';
+
+import { Variable } from './parsers/Variable';
 
 import { Tokenizer } from './tokenizer';
 import { ParserPointer, Token } from './utils/ParserPointer';
 
 export class Parser {
 	private parserPointer: ParserPointer;
-
 	private expression: Expression;
 
 	private comments: Comments;
-	private variableAndConstant: VariableAndConstant;
+	private variable: Variable;
+	private constant: Constant;
 	private function: _Function;
 
 	constructor(private tokenizer: Tokenizer, private content: string, private filename: string) {
 		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
-
 		this.expression = new Expression(this.parserPointer);
 
-		this.variableAndConstant = new VariableAndConstant(this.parserPointer, this.expression);
+		this.variable = new Variable(this.parserPointer, this.expression);
+		this.constant = new Constant(this.parserPointer, this.expression);
 		this.function = new _Function(this.parserPointer, this.stmt.bind(this), this.expression);
 		this.comments = new Comments(this.parserPointer);
 	}
@@ -31,12 +32,14 @@ export class Parser {
 		const comment = this.comments.hashtag() || this.comments.comment();
 		if (comment) return comment;
 
-		const variableAssignment = this.variableAndConstant.variableAssignment();
+		const variableAssignment = this.variable.variableAssignment();
 		if (variableAssignment) return variableAssignment;
 
-		const variableOrConstant =
-			this.variableAndConstant.variable() || this.variableAndConstant.constant();
-		if (variableOrConstant) return variableOrConstant;
+		const variable = this.variable.variable();
+		if (variable) return variable;
+
+		const constant = this.constant.constant();
+		if (constant) return constant;
 
 		const func = this.function.functionDeclaration();
 		if (func) return func;
@@ -76,8 +79,8 @@ export class Parser {
 			}
 		}
 
-		console.log(stmts[1].variables);
-		console.log(stmts[1]);
+		// @ts-ignore
+		console.log(stmts[0].variables);
 
 		return {
 			filename: this.filename,

@@ -3,89 +3,11 @@ import { SyntaxError } from '../errors/SyntaxError';
 import { Expression } from './Expression';
 import { Identifier } from '../tokens';
 
-export class VariableAndConstant {
+export class Variable {
 	private keywords: string[] = [];
 
 	constructor(private pointer: ParserPointer, private expression: Expression) {
 		this.keywords = Object.values(Identifier.keywords);
-	}
-
-	private read(keyword: string) {
-		const { pointer } = this;
-
-		if (!pointer.token || !pointer.take(keyword)) return null;
-
-		const errObj = {
-			lineError: pointer.line,
-			reason: '',
-		};
-
-		let isMultiple = false;
-		const variables: Token['variables'] = [];
-
-		for (;;) {
-			if (!pointer.token || pointer.take('EndFile')) break;
-
-			const name = pointer.take('Identifier');
-			if (!name) {
-				errObj['reason'] = this.keywords.includes(pointer.token.type)
-					? 'this name is a keyword'
-					: 'Expected a variable name';
-
-				new SyntaxError(this.pointer, errObj);
-			}
-
-			const assign = pointer.take('Assignment');
-			if (!assign) {
-				variables.push({
-					name: name as Token,
-					value: 'undefined',
-				});
-			} else {
-				const value = this.expression.expression(true);
-				if (!value) {
-					errObj['reason'] = 'Expected a variable value';
-
-					new SyntaxError(this.pointer, errObj);
-				}
-
-				variables.push({
-					name: name as Token,
-					value: value as Token,
-				});
-			}
-
-			if (pointer.token.type === 'Comma') {
-				const next = pointer.previewNext();
-
-				if (!next || next.type != 'Identifier') {
-					errObj['reason'] = 'Expected a variable name';
-
-					new SyntaxError(this.pointer, errObj);
-				}
-
-				pointer.take('Comma');
-
-				isMultiple = true;
-
-				continue;
-			}
-
-			break;
-		}
-
-		if (isMultiple) {
-			return {
-				type: `Multiple${keyword.replace('Keyword', '')}Declaration`,
-				variables,
-			};
-		}
-
-		return {
-			type: `${keyword.replace('Keyword', '')}Declaration`,
-			name: variables[0].name,
-			value: variables[0].value,
-		};
 	}
 
 	variableAssignment() {
@@ -150,10 +72,80 @@ export class VariableAndConstant {
 	}
 
 	variable() {
-		return this.read('VariableKeyword');
-	}
+		const { pointer } = this;
 
-	constant() {
-		return this.read('ConstantKeyword');
+		if (!pointer.token || !pointer.take('VariableKeyword')) return null;
+
+		const errObj = {
+			lineError: pointer.line,
+			reason: '',
+		};
+
+		let isMultiple = false;
+		const variables: Token['variables'] = [];
+
+		for (;;) {
+			if (!pointer.token || pointer.take('EndFile')) break;
+
+			const name = pointer.take('Identifier');
+			if (!name) {
+				errObj['reason'] = this.keywords.includes(pointer.token.type)
+					? 'this name is a keyword'
+					: 'Expected a variable name';
+
+				new SyntaxError(this.pointer, errObj);
+			}
+
+			const assign = pointer.take('Assignment');
+			if (!assign) {
+				variables.push({
+					name: name as Token,
+					value: 'undefined',
+				});
+			} else {
+				const value = this.expression.expression(true);
+				if (!value) {
+					errObj['reason'] = 'Expected a variable value';
+
+					new SyntaxError(this.pointer, errObj);
+				}
+
+				variables.push({
+					name: name as Token,
+					value: value as Token,
+				});
+			}
+
+			if (pointer.token.type === 'Comma') {
+				const next = pointer.previewNext();
+
+				if (!next || next.type != 'Identifier') {
+					errObj['reason'] = 'Expected a variable name';
+
+					new SyntaxError(this.pointer, errObj);
+				}
+
+				pointer.take('Comma');
+
+				isMultiple = true;
+
+				continue;
+			}
+
+			break;
+		}
+
+		if (isMultiple) {
+			return {
+				type: `MultipleVariableDeclaration`,
+				variables,
+			};
+		}
+
+		return {
+			type: `VariableDeclaration`,
+			name: variables[0].name,
+			value: variables[0].value,
+		};
 	}
 }
