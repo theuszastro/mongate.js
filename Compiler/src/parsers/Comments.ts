@@ -11,11 +11,10 @@ export class Comments {
 		for (;;) {
 			if (!pointer.token || pointer.take('EndFile')) break;
 
-			const next = pointer.previewNext(false);
-			if (next && next.type != 'NewLine') {
+			if (!pointer.take('NewLine')) {
 				value += pointer.token.value;
 
-				pointer.next();
+				pointer.next(true, false, false);
 
 				continue;
 			}
