@@ -1,12 +1,14 @@
 import { SyntaxError } from '../errors/SyntaxError';
 import { ParserPointer, Token } from '../utils/ParserPointer';
 import { Expression } from './Expression';
+import { Variable } from './Variable';
 
 export class _Function {
 	constructor(
 		private pointer: ParserPointer,
 		private stmts: Function,
-		private expression: Expression
+		private expression: Expression,
+		private variable: Variable
 	) {}
 
 	private functionReadArg() {
@@ -110,6 +112,87 @@ export class _Function {
 		return body;
 	}
 
+	private functionCallArgs() {
+		const { pointer } = this;
+
+		const params: Token[] = [];
+		const data = ['Identifier'];
+
+		for (;;) {
+			if (!pointer.token || pointer.take('EndFile') || data.includes(pointer.token.type))
+				break;
+
+			const comma = pointer.take('Comma');
+			const lineError = pointer.line;
+
+			const arg = this.expression.expression(true);
+
+			if (params.length >= 1) {
+				if (!comma && arg) {
+					new SyntaxError(pointer, {
+						lineError,
+						reason: `Expected a ','`,
+					});
+				}
+			}
+
+			if (!arg) break;
+
+			params.push(arg);
+		}
+
+		return params;
+	}
+
+	functionCall() {
+		const { pointer } = this;
+
+		if (!pointer.token) return null;
+
+		const next = pointer.previewNext();
+		if (next && next.type === 'Assignment') return null;
+
+		const callWithAwait = pointer.token.type === 'AwaitKeyword';
+		pointer.take('AwaitKeyword');
+
+		const name = pointer.take('Identifier');
+		if (!name) return null;
+
+		switch (pointer.token.type) {
+			case 'OpenParen': {
+				pointer.take('OpenParen');
+
+				const params = this.functionCallArgs();
+
+				const close = pointer.take('CloseParen');
+				if (!close)
+					new SyntaxError(pointer, {
+						lineError: pointer.line,
+						reason: `Expected a ')'`,
+					});
+
+				return {
+					type: callWithAwait ? 'AsyncFunctionCall' : 'FunctionCall',
+					name,
+					params,
+				};
+			}
+
+			case 'Not':
+				pointer.take('Not');
+
+			default: {
+				const params = this.functionCallArgs();
+
+				return {
+					type: callWithAwait ? 'AsyncFunctionCall' : 'FunctionCall',
+					name,
+					params,
+				};
+			}
+		}
+	}
+
 	functionDeclaration() {
 		const { pointer } = this;
 
@@ -125,9 +208,9 @@ export class _Function {
 					lineError: pointer.line,
 					reason: 'Expected a function declaration',
 				});
-
-			pointer.take('FunctionKeyword');
 		}
+
+		pointer.take('FunctionKeyword');
 
 		const name = pointer.take('Identifier');
 		if (!name)

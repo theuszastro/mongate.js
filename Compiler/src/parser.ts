@@ -23,20 +23,34 @@ export class Parser {
 	constructor(private tokenizer: Tokenizer, private content: string, private filename: string) {
 		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
 
+		this.stmt = this.stmt.bind(this);
+
 		this.comments = new Comments(this.parserPointer);
 		this.expression = new Expression(this.parserPointer, this.comments);
-		this.loops = new Loops(this.parserPointer, this.stmt.bind(this));
-		this.variable = new Variable(this.parserPointer, this.expression);
+		this.loops = new Loops(this.parserPointer, this.stmt);
+		this.variable = new Variable(this.parserPointer, this.stmt);
 		this.constant = new Constant(this.parserPointer, this.expression);
-		this.function = new _Function(this.parserPointer, this.stmt.bind(this), this.expression);
+		this.function = new _Function(
+			this.parserPointer,
+			this.stmt,
+			this.expression,
+			this.variable
+		);
 	}
 
-	private stmt() {
+	private stmt(isValue?: boolean) {
+		if (isValue) {
+			const funcCall = this.function.functionCall();
+			if (funcCall) return funcCall;
+
+			const expr = this.expression.expression(isValue);
+			if (expr) return expr;
+
+			return null;
+		}
+
 		const comment = this.comments.hashtag() || this.comments.comment();
 		if (comment) return comment;
-
-		const variableAssignment = this.variable.variableAssignment();
-		if (variableAssignment) return variableAssignment;
 
 		const variable = this.variable.variable();
 		if (variable) return variable;
@@ -47,6 +61,12 @@ export class Parser {
 		const func = this.function.functionDeclaration();
 		if (func) return func;
 
+		const funcCall = this.function.functionCall();
+		if (funcCall) return funcCall;
+
+		const variableAssignment = this.variable.variableAssignment();
+		if (variableAssignment) return variableAssignment;
+
 		const loops = this.loops.loop();
 		if (loops) return loops;
 
@@ -55,9 +75,8 @@ export class Parser {
 	}
 
 	parse() {
-		const { parserPointer } = this;
-
 		const stmts: Token[] = [];
+		const { parserPointer } = this;
 
 		parserPointer.next();
 
@@ -85,8 +104,7 @@ export class Parser {
 			}
 		}
 
-		// @ts-ignore
-		console.log(stmts[0]);
+		console.log(stmts);
 
 		return {
 			filename: this.filename,

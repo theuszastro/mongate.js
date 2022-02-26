@@ -6,7 +6,7 @@ import { Identifier } from '../tokens';
 export class Variable {
 	private keywords: string[] = [];
 
-	constructor(private pointer: ParserPointer, private expression: Expression) {
+	constructor(private pointer: ParserPointer, private stmt: Function) {
 		this.keywords = Object.values(Identifier.keywords);
 	}
 
@@ -55,7 +55,7 @@ export class Variable {
 			operator = op;
 		}
 
-		const value = this.expression.expression(true);
+		const value = this.stmt(true);
 		if (!value)
 			new SyntaxError(this.pointer, {
 				lineError: pointer.line,
@@ -104,7 +104,7 @@ export class Variable {
 					value: 'undefined',
 				});
 			} else {
-				const value = this.expression.expression(true);
+				const value = this.stmt(true);
 				if (!value) {
 					errObj['reason'] = 'Expected a variable value';
 

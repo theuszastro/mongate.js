@@ -6,6 +6,7 @@ export type Token = {
 	size?: number;
 	flags?: string;
 	values?: Token[];
+	params?: Token[];
 	body?: Token[];
 	left?: Token;
 	right?: Token;

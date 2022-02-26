@@ -15,8 +15,7 @@ export class Number {
 		this.value = '';
 
 		for (;;) {
-			const next = pointer.previewNext();
-
+			const next = pointer.previewNext(true, false);
 			if (!next || (next.type == 'Identifier' && next.value != 'e')) break;
 
 			this.value += (pointer.token as Token).value;
