@@ -1,3 +1,4 @@
+import { Token } from '../types/token';
 import { Pointer } from '../utils/Pointer';
 
 export class OperatorLogic {
@@ -14,11 +15,11 @@ export class OperatorLogic {
 		'.': 'Dot',
 	} as { [key: string]: string };
 
-	operatorLogic() {
+	operatorLogic(): Token | undefined {
 		const { pointer } = this;
 
 		const operator = this.operators[pointer.char];
-		if (!operator) return null;
+		if (!operator) return;
 
 		const value = pointer.char;
 		pointer.next();

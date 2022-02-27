@@ -1,39 +1,49 @@
 import { SyntaxError } from '../errors/SyntaxError';
-import { ParserPointer, Token } from '../utils/ParserPointer';
+import { TypeToken } from '../types/parsedToken';
+import { ParserPointer } from '../utils/ParserPointer';
 
 export class Number {
-	private value = '';
-
 	constructor(private pointer: ParserPointer) {}
 
-	number() {
+	number(): TypeToken | undefined {
 		const { pointer } = this;
+		if (!pointer.token || !['Number'].includes(pointer.token.type)) return;
 
-		const token = pointer.token;
-		if (!token || token.type != 'Number') return null;
-
-		this.value = '';
+		let value = '';
 
 		for (;;) {
 			const next = pointer.previewNext(true, false);
 			if (!next || (next.type == 'Identifier' && next.value != 'e')) break;
 
-			this.value += (pointer.token as Token).value;
+			if (value.endsWith('.')) {
+				if (['Dot', 'Identifier'].includes(pointer.token.type)) {
+					new SyntaxError(pointer, {
+						lineError: pointer.line,
+						reason: `Unexpected token '${pointer.token.value}'`,
+					});
+				}
+			}
 
-			if (!['Number', 'Identifier'].includes(next.type)) break;
+			value += pointer.token.value;
 
-			pointer.take((pointer.token as Token).type);
+			if (!['Number', 'Identifier', 'Dot'].includes(next.type)) break;
+
+			pointer.take(pointer.token.type);
 		}
 
-		if (this.value.endsWith('e'))
+		if (value.endsWith('e'))
 			new SyntaxError(this.pointer, {
 				lineError: pointer.line,
 				reason: `Unexpected 'e'`,
 			});
 
+		if (value.endsWith('.')) {
+			value += '00';
+		}
+
 		return {
 			type: 'Number',
-			value: this.value,
+			value,
 		};
 	}
 }

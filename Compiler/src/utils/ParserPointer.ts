@@ -1,32 +1,21 @@
 import { Tokenizer } from '../tokenizer';
-
-export type Token = {
-	type: string;
-	value?: string | Token;
-	size?: number;
-	flags?: string;
-	values?: Token[];
-	params?: Token[];
-	body?: Token[];
-	left?: Token;
-	right?: Token;
-	operator?: Token;
-	default?: string | Token;
-	variables?: Array<{ name: string | Token; value: string | Token }>;
-	ctx?: {
-		file: string;
-		line: number;
-		column: number;
-	};
-};
+import { Token } from '../types/token';
 
 export class ParserPointer {
-	public token?: Token | null = null;
+	public token: Token | undefined;
 	public rawTokens: Token[] = [];
 
 	public line = 1;
 
 	constructor(private tokenizer: Tokenizer, public filename: string, private content: string) {}
+
+	memorize() {
+		return this.tokenizer.pointer.memorize();
+	}
+
+	restore(data: any) {
+		return this.tokenizer.pointer.restore(data);
+	}
 
 	previewNext(skipNewline = true, skipWhiteSpace = true) {
 		return this.tokenizer.previewNext(skipNewline, skipWhiteSpace);
@@ -34,10 +23,7 @@ export class ParserPointer {
 
 	next(skipSemicolon = true, skipWhiteSpace = true, skipNewline = true) {
 		this.token = this.tokenizer.nextToken();
-
-		if (!this.token) {
-			throw new TypeError('next token is undefined');
-		}
+		if (!this.token) throw new TypeError('next token is undefined');
 
 		this.rawTokens.push(this.token);
 
@@ -70,6 +56,31 @@ export class ParserPointer {
 
 	getLine(line: number) {
 		return this.content.split('\n')[line - 1];
+	}
+
+	takeMultiple(
+		types: string[],
+		skipSemicolon?: boolean,
+		skipWhiteSpace?: boolean,
+		skipNewline?: boolean
+	) {
+		let result: Array<Token | undefined> = [];
+
+		if (this.token) {
+			for (let type of types) {
+				if (this.token.type == type) {
+					result.push(this.token);
+
+					this.take(type, skipSemicolon, skipWhiteSpace, skipNewline);
+
+					continue;
+				}
+
+				result.push(undefined);
+			}
+		}
+
+		return result;
 	}
 
 	take(type: string, skipSemicolon?: boolean, skipWhiteSpace?: boolean, skipNewline?: boolean) {

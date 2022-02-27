@@ -1,5 +1,8 @@
 import { SyntaxError } from '../errors/SyntaxError';
-import { ParserPointer, Token } from '../utils/ParserPointer';
+import { RegexToken } from '../types/parsedToken';
+import { Token } from '../types/token';
+
+import { ParserPointer } from '../utils/ParserPointer';
 import { Others } from './Others';
 
 export class RegExp {
@@ -13,40 +16,29 @@ export class RegExp {
 		this.others = new Others(pointer);
 	}
 
-	regexp() {
+	regexp(): RegexToken | undefined {
 		const { pointer, others } = this;
 
-		if (!pointer.token) return null;
-
 		const operator = pointer.take('Operator');
-		if (!operator || operator.value != '/') return null;
+		if (!pointer.token || !operator || operator.value != '/') return;
 
 		for (;;) {
 			if (!pointer.token || pointer.token.type == 'EndFile') break;
 
+			const token = pointer.token;
 			const expr = others.others();
 
-			if (expr) {
-				this.value += expr.value;
-
-				pointer.next(true, false);
-
-				continue;
-			}
-
-			const token = pointer.token;
 			if (token.type == 'Operator' && token.value == '/') break;
 
-			this.value += token.value;
+			this.value += expr ? expr.value : token.value;
 
-			pointer.next(true, false);
+			pointer.next(false, false);
 		}
 
-		const next = pointer.previewNext(true, false);
-		pointer.take('Operator');
+		pointer.take('Operator', true, false);
 
-		if (next) {
-			if (next.type != 'Whitespace' && next.type === 'Identifier') {
+		if (pointer.token) {
+			if (pointer.token.type != 'Whitespace' && pointer.token.type === 'Identifier') {
 				const flags = pointer.take('Identifier') as Token;
 
 				for (let flag of (flags.value as string).split('')) {

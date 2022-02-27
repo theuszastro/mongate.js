@@ -1,9 +1,10 @@
+import { Token } from '../types/token';
 import { Pointer } from '../utils/Pointer';
 
 export class Brackets {
 	constructor(private pointer: Pointer) {}
 
-	curly() {
+	curly(): Token | undefined {
 		const { pointer } = this;
 
 		if (['{', '}'].includes(pointer.char)) {
@@ -17,11 +18,9 @@ export class Brackets {
 				ctx: pointer.context(),
 			};
 		}
-
-		return null;
 	}
 
-	parenthesis() {
+	parenthesis(): Token | undefined {
 		const { pointer } = this;
 
 		if (['(', ')'].includes(pointer.char)) {
@@ -35,11 +34,9 @@ export class Brackets {
 				ctx: pointer.context(),
 			};
 		}
-
-		return null;
 	}
 
-	square() {
+	square(): Token | undefined {
 		const { pointer } = this;
 
 		if (['[', ']'].includes(pointer.char)) {
@@ -53,7 +50,5 @@ export class Brackets {
 				ctx: pointer.context(),
 			};
 		}
-
-		return null;
 	}
 }

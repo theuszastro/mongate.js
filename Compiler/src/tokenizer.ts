@@ -1,3 +1,5 @@
+import { Token } from './types/token';
+
 import { Pointer } from './utils/Pointer';
 import {
 	Boolean,
@@ -12,10 +14,9 @@ import {
 	Others,
 } from './tokens';
 
-import { Token } from './utils/ParserPointer';
-
 export class Tokenizer {
-	private pointer: Pointer;
+	public pointer: Pointer;
+
 	private newline: NewLine;
 	private colon: Colon;
 	private whitespace: Whitespace;
@@ -47,17 +48,16 @@ export class Tokenizer {
 		if (!this.pointer.char) {
 			return {
 				type: 'EndFile',
+				value: '',
 				ctx: this.pointer.context(),
 			};
 		}
-
-		return null;
 	}
 
 	previewNext(skipNewline = true, skipWhiteSpace = true) {
 		const memorized = this.pointer.memorize();
 
-		let token: Token | null = null;
+		let token: Token | undefined;
 
 		for (;;) {
 			token = this.nextToken();
@@ -74,13 +74,14 @@ export class Tokenizer {
 		return token;
 	}
 
-	nextToken() {
+	nextToken(): Token | undefined {
 		const token =
 			this.newline.newline() ||
 			this.whitespace.whitespace() ||
 			this.colon.semicolon() ||
 			this.colon.colon() ||
 			this.colon.comma() ||
+			this.others.others() ||
 			this.brackets.square() ||
 			this.brackets.parenthesis() ||
 			this.brackets.curly() ||
@@ -89,7 +90,6 @@ export class Tokenizer {
 			this.identifier.identifier() ||
 			this.number.number() ||
 			this.boolean.boolean() ||
-			this.others.others() ||
 			this.endFile();
 
 		return token;

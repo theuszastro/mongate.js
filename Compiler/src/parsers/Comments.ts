@@ -7,7 +7,6 @@ export class Comments {
 		let value = '';
 
 		const { pointer } = this;
-
 		const startLine = pointer.line;
 
 		for (;;) {
@@ -23,8 +22,6 @@ export class Comments {
 
 			break;
 		}
-
-		console.log(value);
 
 		return value;
 	}
@@ -54,26 +51,26 @@ export class Comments {
 			};
 		}
 
-		if (!pointer.token) return null;
+		const next = pointer.previewNext();
+		const typeAllowed = ['Operator'];
 
-		const token = pointer.token;
+		if (
+			!pointer.token ||
+			!next ||
+			!typeAllowed.includes(pointer.token.type) ||
+			!typeAllowed.includes(next.type) ||
+			// @ts-ignore
+			!['//'].includes(pointer.token.value + next.value)
+		)
+			return;
 
-		if (token.type === 'Operator' && token.value === '/') {
-			const next = pointer.previewNext(true, false);
+		pointer.takeMultiple(['Operator', 'Operator'], true, false);
 
-			if (next && next.type === 'Operator' && next.value == '/') {
-				pointer.take('Operator');
-				pointer.take('Operator');
+		const value = this.readLine();
 
-				const value = this.readLine();
-
-				return {
-					type: 'Comment',
-					value: value,
-				};
-			}
-		}
-
-		return null;
+		return {
+			type: 'Comment',
+			value: value,
+		};
 	}
 }

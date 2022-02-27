@@ -1,3 +1,4 @@
+import { Token } from '../types/token';
 import { Pointer } from '../utils/Pointer';
 
 export class Whitespace {
@@ -9,8 +10,8 @@ export class Whitespace {
 		return /\s/.test(this.pointer.char);
 	}
 
-	whitespace() {
-		if (!this.isWhitespace()) return null;
+	whitespace(): Token | undefined {
+		if (!this.isWhitespace()) return;
 
 		this.size = 1;
 		this.pointer.next();

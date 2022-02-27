@@ -1,5 +1,7 @@
 import { SyntaxError } from '../errors/SyntaxError';
-import { ParserPointer, Token } from '../utils/ParserPointer';
+import { ParserPointer } from '../utils/ParserPointer';
+
+import { LoopToken, ParsedToken } from '../types/parsedToken';
 
 export class Loops {
 	constructor(private pointer: ParserPointer, private stmts: Function) {}
@@ -7,7 +9,7 @@ export class Loops {
 	private readBlock(lineError: number) {
 		const { pointer } = this;
 
-		const body: Token[] = [];
+		const body: ParsedToken[] = [];
 
 		for (;;) {
 			if (!pointer.token || pointer.take('EndFile'))
@@ -41,11 +43,11 @@ export class Loops {
 		return body;
 	}
 
-	loop() {
+	loop(): LoopToken | undefined {
 		const { pointer } = this;
 		const line = pointer.line;
 
-		if (!pointer.token || !pointer.take('LoopKeyword')) return null;
+		if (!pointer.token || !pointer.take('LoopKeyword')) return;
 
 		const body = this.readBlock(line);
 

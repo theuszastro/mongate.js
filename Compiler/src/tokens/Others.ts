@@ -1,3 +1,4 @@
+import { Token } from '../types/token';
 import { Pointer } from '../utils/Pointer';
 
 export class Others {
@@ -13,13 +14,13 @@ export class Others {
 
 	constructor(private pointer: Pointer) {}
 
-	others() {
+	others(): Token | undefined {
 		const { pointer, tokens } = this;
 
 		const char = pointer.char;
 		const token = tokens[char];
 
-		if (!char || !token) return null;
+		if (!char || !token) return;
 
 		pointer.next();
 

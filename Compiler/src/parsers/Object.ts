@@ -1,6 +1,14 @@
-import { takeCoverage } from 'v8';
 import { SyntaxError } from '../errors/SyntaxError';
-import { ParserPointer, Token } from '../utils/ParserPointer';
+
+import {
+	DefaultToken,
+	ObjectPropertyReadToken,
+	ObjectToken,
+	ParsedToken,
+} from '../types/parsedToken';
+import { Token } from '../types/token';
+
+import { ParserPointer } from '../utils/ParserPointer';
 import { Expression } from './Expression';
 
 export class _Object {
@@ -19,20 +27,61 @@ export class _Object {
 		return expr;
 	}
 
-	private readValue() {
+	objectProperty(): ObjectPropertyReadToken | DefaultToken | undefined {
 		const { pointer } = this;
-		if (!pointer.token) return null;
+		if (!pointer.token || !['ThisKeyword', 'Identifier'].includes(pointer.token.type)) return;
 
-		return this.expression.expression(true);
+		const next = pointer.previewNext();
+		if (next && next.type != 'Dot') return;
+
+		let name = pointer.take(pointer.token.type)!.value as string;
+
+		for (;;) {
+			if (!pointer.token || ['EndFile'].includes(pointer.token.type)) break;
+
+			const type = pointer.take('Dot');
+			if (!type) break;
+
+			name += '.';
+
+			const key = pointer.take('Identifier');
+			if (!key)
+				new SyntaxError(pointer, {
+					lineError: pointer.line,
+					reason: `Expected a property name`,
+				});
+
+			name += key!.value;
+		}
+
+		const assign = pointer.take('Assignment');
+		if (!assign)
+			return {
+				type: 'ObjectPropertyRead',
+				name,
+			};
+
+		const value = this.expression.expression(true);
+		if (!value)
+			new SyntaxError(pointer, {
+				lineError: pointer.line,
+				reason: `Expected a value`,
+			});
+
+		return {
+			type: 'ObjectPropertyAssignment',
+			name,
+			value,
+		};
 	}
 
-	object() {
+	object(): ObjectToken | undefined {
 		const { pointer } = this;
-		if (!pointer.token) return null;
+		if (!pointer.token) return;
 
 		pointer.take('OpenCurly');
 
-		const properties: Token[] = [];
+		const properties: ParsedToken[] = [];
 
 		while (pointer.token.type != 'CloseCurly') {
 			const lineError = pointer.line;
@@ -54,7 +103,7 @@ export class _Object {
 				});
 			}
 
-			const value = this.readValue();
+			const value = this.expression.expression(true);
 			if (!value)
 				new SyntaxError(this.pointer, {
 					lineError,
@@ -73,9 +122,9 @@ export class _Object {
 
 			properties.push({
 				type: 'ObjectProperty',
-				name: property as Token,
-				value: value as Token,
-			} as Token);
+				name: property,
+				value,
+			});
 		}
 
 		pointer.take('CloseCurly');

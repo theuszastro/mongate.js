@@ -4,11 +4,13 @@ import { Constant } from './parsers/Constant';
 import { Expression } from './parsers/Expression';
 import { _Function } from './parsers/Function';
 import { Loops } from './parsers/Loops';
+import { Class } from './parsers/Class';
 
 import { Variable } from './parsers/Variable';
 
 import { Tokenizer } from './tokenizer';
-import { ParserPointer, Token } from './utils/ParserPointer';
+import { ParserPointer } from './utils/ParserPointer';
+import { ParsedToken } from './types/parsedToken';
 
 export class Parser {
 	private parserPointer: ParserPointer;
@@ -19,36 +21,25 @@ export class Parser {
 	private constant: Constant;
 	private function: _Function;
 	private loops: Loops;
+	private classes: Class;
 
 	constructor(private tokenizer: Tokenizer, private content: string, private filename: string) {
 		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
 
 		this.stmt = this.stmt.bind(this);
+		this.argStmt = this.argStmt.bind(this);
+		this.valueStmt = this.valueStmt.bind(this);
 
 		this.comments = new Comments(this.parserPointer);
-		this.expression = new Expression(this.parserPointer, this.comments);
+		this.expression = new Expression(this.parserPointer);
 		this.loops = new Loops(this.parserPointer, this.stmt);
 		this.variable = new Variable(this.parserPointer, this.stmt);
 		this.constant = new Constant(this.parserPointer, this.expression);
-		this.function = new _Function(
-			this.parserPointer,
-			this.stmt,
-			this.expression,
-			this.variable
-		);
+		this.function = new _Function(this.parserPointer, this.expression, this.stmt, this.argStmt);
+		this.classes = new Class(this.parserPointer, this.function, this.stmt);
 	}
 
-	private stmt(isValue?: boolean) {
-		if (isValue) {
-			const funcCall = this.function.functionCall();
-			if (funcCall) return funcCall;
-
-			const expr = this.expression.expression(isValue);
-			if (expr) return expr;
-
-			return null;
-		}
-
+	private stmt() {
 		const comment = this.comments.hashtag() || this.comments.comment();
 		if (comment) return comment;
 
@@ -57,6 +48,9 @@ export class Parser {
 
 		const constant = this.constant.constant();
 		if (constant) return constant;
+
+		const _class = this.classes._class();
+		if (_class) return _class;
 
 		const func = this.function.functionDeclaration();
 		if (func) return func;
@@ -74,8 +68,25 @@ export class Parser {
 		if (expr) return expr;
 	}
 
+	argStmt() {
+		const funcCall = this.function.functionCall();
+		if (funcCall) return funcCall;
+
+		return;
+	}
+
+	valueStmt() {
+		const funcCall = this.function.functionCall();
+		if (funcCall) return funcCall;
+
+		const expr = this.expression.expression(true);
+		if (expr) return expr;
+
+		return;
+	}
+
 	parse() {
-		const stmts: Token[] = [];
+		const stmts: ParsedToken[] = [];
 		const { parserPointer } = this;
 
 		parserPointer.next();
@@ -100,11 +111,12 @@ export class Parser {
 					break;
 				}
 
-				stmts.push(token as Token);
+				stmts.push(token as ParsedToken);
 			}
 		}
 
-		console.log(stmts);
+		// @ts-ignore
+		console.log(stmts[0].body[1].body[0].value.properties);
 
 		return {
 			filename: this.filename,

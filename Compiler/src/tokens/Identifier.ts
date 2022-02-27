@@ -1,4 +1,5 @@
 import removeAccents from 'remove-accents';
+import { Token } from '../types/token';
 
 import { Pointer } from '../utils/Pointer';
 import { Boolean } from './Boolean';
@@ -22,6 +23,9 @@ export class Identifier {
 		else: 'ElseKeyword',
 		return: 'ReturnKeyword',
 		class: 'ClassKeyword',
+		this: 'ThisKeyword',
+		extends: 'ExtendsKeyword',
+		constructor: 'ConstructorKeyword',
 		end: 'EndKeyword',
 		break: 'BreakKeyword',
 		continue: 'ContinueKeyword',
@@ -50,7 +54,7 @@ export class Identifier {
 		);
 	}
 
-	identifier() {
+	identifier(): Token | undefined {
 		const { pointer } = this;
 
 		if (this.isChar()) {
@@ -81,7 +85,5 @@ export class Identifier {
 				ctx: pointer.context(),
 			};
 		}
-
-		return null;
 	}
 }

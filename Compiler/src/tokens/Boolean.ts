@@ -1,3 +1,4 @@
+import { Token } from '../types/token';
 import { Pointer } from '../utils/Pointer';
 
 export class Boolean {
@@ -9,7 +10,7 @@ export class Boolean {
 		return ['true', 'false'].includes(data);
 	}
 
-	boolean(data?: string) {
+	boolean(data?: string): Token | undefined {
 		const { pointer } = this;
 
 		if (data) {
@@ -37,7 +38,5 @@ export class Boolean {
 				};
 			}
 		}
-
-		return null;
 	}
 }

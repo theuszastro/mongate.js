@@ -1,7 +1,14 @@
-import { ParserPointer, Token } from '../utils/ParserPointer';
+import { ParserPointer } from '../utils/ParserPointer';
 import { SyntaxError } from '../errors/SyntaxError';
-import { Expression } from './Expression';
+
 import { Identifier } from '../tokens';
+import { Token } from '../types/token';
+import {
+	DefaultToken,
+	VariableAssignment,
+	VariablesType,
+	VariableToken,
+} from '../types/parsedToken';
 
 export class Variable {
 	private keywords: string[] = [];
@@ -10,33 +17,34 @@ export class Variable {
 		this.keywords = Object.values(Identifier.keywords);
 	}
 
-	variableAssignment() {
+	variableAssignment(): VariableAssignment | undefined {
 		const { pointer } = this;
 
-		if (!pointer.token) return null;
+		const next = pointer.previewNext();
 
-		const name = pointer.take('Identifier');
-		if (!name) return null;
+		if (!pointer.token || !next || (next.type != 'Assignment' && next.type != 'Operator'))
+			return;
 
-		let isWithOperator = false;
-		let operator: Token | null = null;
+		const [name, assignment] = pointer.takeMultiple(['Identifier', 'Assignment']);
+		if (!name) return;
 
-		if (!pointer.take('Assignment')) {
-			const op = pointer.take('Operator', true, false);
-			if (!op) return null;
+		let operator: Token | undefined;
 
-			const op1 = pointer.take('Operator');
+		if (!assignment) {
+			const [op, op1] = pointer.takeMultiple(['Operator', 'Operator']);
 
+			if (!op) return;
 			if (op1) {
 				const operators = ['+', '-'];
 
 				if (
 					!operators.includes(op.value as string) ||
-					!operators.includes(op1.value as string)
+					!operators.includes(op1.value as string) ||
+					op.value != op1.value
 				) {
 					new SyntaxError(pointer, {
 						lineError: pointer.line,
-						reason: `Unexpected token '${op1.value}'`,
+						reason: `Unexpected token '${op.value}${op1.value}'`,
 					});
 				}
 
@@ -44,37 +52,38 @@ export class Variable {
 
 				return {
 					type: value === '++' ? 'VariableIncrement' : 'VariableDecrement',
+					name,
 					value,
+					operator,
 				};
 			}
 
 			const assign = pointer.take('Assignment');
-			if (!assign) return null;
+			if (!assign) return;
 
-			isWithOperator = true;
 			operator = op;
 		}
 
 		const value = this.stmt(true);
 		if (!value)
-			new SyntaxError(this.pointer, {
+			new SyntaxError(pointer, {
 				lineError: pointer.line,
 
 				reason: 'Expected a variable value',
 			});
 
 		return {
-			type: isWithOperator ? 'VariableAssignmentWithOperator' : 'VariableAssignment',
+			type: 'VariableAssignment',
 			name,
 			value,
 			operator,
 		};
 	}
 
-	variable() {
+	variable(): VariableToken | undefined {
 		const { pointer } = this;
 
-		if (!pointer.token || !pointer.take('VariableKeyword')) return null;
+		if (!pointer.token || !pointer.take('VariableKeyword')) return;
 
 		const errObj = {
 			lineError: pointer.line,
@@ -82,51 +91,42 @@ export class Variable {
 		};
 
 		let isMultiple = false;
-		const variables: Token['variables'] = [];
+		const variables: VariablesType[] = [];
 
 		for (;;) {
-			if (!pointer.token || pointer.take('EndFile')) break;
+			const [name, assign] = pointer.takeMultiple(['Identifier', 'Assignment']);
 
-			const name = pointer.take('Identifier');
 			if (!name) {
 				errObj['reason'] = this.keywords.includes(pointer.token.type)
 					? 'this name is a keyword'
 					: 'Expected a variable name';
 
-				new SyntaxError(this.pointer, errObj);
+				new SyntaxError(pointer, errObj);
+
+				return;
 			}
 
-			const assign = pointer.take('Assignment');
-
 			if (!assign) {
-				variables.push({
-					name: name as Token,
-					value: 'undefined',
-				});
+				variables.push({ name, value: 'undefined' });
 			} else {
 				const value = this.stmt(true);
 				if (!value) {
 					errObj['reason'] = 'Expected a variable value';
 
-					new SyntaxError(this.pointer, errObj);
+					new SyntaxError(pointer, errObj);
+
+					return;
 				}
 
-				variables.push({
-					name: name as Token,
-					value: value as Token,
-				});
+				variables.push({ name, value });
 			}
 
-			if (pointer.token.type === 'Comma') {
-				const next = pointer.previewNext();
-
-				if (!next || next.type != 'Identifier') {
+			if (pointer.take('Comma')) {
+				if (!pointer.token || pointer.token.type != 'Identifier') {
 					errObj['reason'] = 'Expected a variable name';
 
-					new SyntaxError(this.pointer, errObj);
+					new SyntaxError(pointer, errObj);
 				}
-
-				pointer.take('Comma');
 
 				isMultiple = true;
 
@@ -136,17 +136,16 @@ export class Variable {
 			break;
 		}
 
-		if (isMultiple) {
-			return {
-				type: `MultipleVariableDeclaration`,
-				variables,
-			};
-		}
-
 		return {
 			type: `VariableDeclaration`,
-			name: variables[0].name,
-			value: variables[0].value,
+			...(isMultiple
+				? {
+						variables,
+				  }
+				: {
+						name: variables[0].name,
+						value: variables[0].value,
+				  }),
 		};
 	}
 }

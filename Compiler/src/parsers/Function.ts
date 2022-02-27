@@ -1,88 +1,74 @@
 import { SyntaxError } from '../errors/SyntaxError';
-import { ParserPointer, Token } from '../utils/ParserPointer';
+import { ParserPointer } from '../utils/ParserPointer';
+
+import { Token } from '../types/token';
 import { Expression } from './Expression';
-import { Variable } from './Variable';
+import { FunctionArg, FunctionCallToken, FunctionToken, ParsedToken } from '../types/parsedToken';
 
 export class _Function {
 	constructor(
 		private pointer: ParserPointer,
-		private stmts: Function,
 		private expression: Expression,
-		private variable: Variable
+		private stmt: Function,
+		private argStmt: Function
 	) {}
 
-	private functionReadArg() {
+	private functionArgs(): FunctionArg[] {
 		const { pointer } = this;
 
-		if (!pointer.token) return null;
+		const args: FunctionArg[] = [];
+		if (!pointer.token) return args;
 
-		const name = pointer.take('Identifier');
-		if (!name) return null;
-
-		const arg = {
-			type: 'FunctionParam',
-			name,
-			default: 'undefined',
-		} as Token;
-
-		switch (pointer.token.type) {
-			case 'Assignment': {
-				pointer.take('Assignment');
-
-				const value = this.expression.expression(true);
-				if (!value) {
-					new SyntaxError(pointer, {
-						lineError: pointer.line,
-						reason: 'Expected a default param value',
-					});
-				}
-
-				arg.default = value as Token;
-
-				const next = pointer.previewNext();
-				if ((pointer.token.type as string) == 'Comma') {
-					if (!next || next.type != 'Identifier')
-						new SyntaxError(pointer, {
-							lineError: pointer.line,
-							reason: `Unexpected a '${pointer.token.value}'`,
-						});
-
-					pointer.take('Comma');
-				}
-
-				break;
-			}
-
-			case 'Comma': {
-				const next = pointer.previewNext();
-
-				if (!next || next.type != 'Identifier')
-					new SyntaxError(pointer, {
-						lineError: pointer.line,
-						reason: `Unexpected a '${pointer.token.value}'`,
-					});
-
-				pointer.take('Comma');
-
-				break;
-			}
-		}
-
-		return arg;
-	}
-
-	private functionArgs() {
-		const { pointer } = this;
-
-		if (!pointer.token) return null;
-
-		const args: Token[] = [];
+		let isFirst = true;
 
 		for (;;) {
 			if (!pointer.token) break;
 
-			const arg = this.functionReadArg();
-			if (!arg) break;
+			const comma = pointer.take('Comma');
+			if (!comma) {
+				if (!isFirst) {
+					break;
+				}
+
+				isFirst = false;
+			}
+
+			const name = pointer.take('Identifier');
+			if (!name) break;
+
+			const arg = {
+				type: 'FunctionArg',
+				name,
+				default: 'undefined',
+			} as FunctionArg;
+
+			switch (pointer.token.type) {
+				case 'Assignment': {
+					pointer.take('Assignment');
+
+					const value = this.expression.expression(true);
+					if (!value)
+						new SyntaxError(pointer, {
+							lineError: pointer.line,
+							reason: 'Expected a default param value',
+						});
+
+					arg.default = value as Token;
+
+					const next = pointer.previewNext();
+					if ((pointer.token.type as string) == 'Comma') {
+						if (!next || next.type != 'Identifier')
+							new SyntaxError(pointer, {
+								lineError: pointer.line,
+								reason: `Unexpected a '${pointer.token.value}'`,
+							});
+
+						pointer.take('Comma');
+					}
+
+					break;
+				}
+			}
 
 			args.push(arg);
 		}
@@ -90,11 +76,11 @@ export class _Function {
 		return args;
 	}
 
-	private functionBody() {
+	private functionBody(): ParsedToken[] {
 		const { pointer } = this;
-		if (!pointer.token) return null;
 
-		const body: Token[] = [];
+		const body: ParsedToken[] = [];
+		if (!pointer.token) return body;
 
 		for (;;) {
 			if (!pointer.token || pointer.take('EndFile'))
@@ -105,21 +91,26 @@ export class _Function {
 
 			if (pointer.take('EndKeyword')) break;
 
-			const result = this.stmts();
+			const result = this.stmt();
 			if (result) body.push(result);
 		}
 
 		return body;
 	}
 
-	private functionCallArgs() {
+	private functionCallArgs(): ParsedToken[] {
 		const { pointer } = this;
 
-		const params: Token[] = [];
+		const params: ParsedToken[] = [];
 		const data = ['Identifier'];
 
 		for (;;) {
-			if (!pointer.token || pointer.take('EndFile') || data.includes(pointer.token.type))
+			if (
+				!pointer.token ||
+				pointer.take('EndFile') ||
+				data.includes(pointer.token.type) ||
+				pointer.token.type.endsWith('Keyword')
+			)
 				break;
 
 			const comma = pointer.take('Comma');
@@ -127,14 +118,12 @@ export class _Function {
 
 			const arg = this.expression.expression(true);
 
-			if (params.length >= 1) {
-				if (!comma && arg) {
+			if (params.length >= 1)
+				if (!comma && arg)
 					new SyntaxError(pointer, {
 						lineError,
 						reason: `Expected a ','`,
 					});
-				}
-			}
 
 			if (!arg) break;
 
@@ -144,19 +133,25 @@ export class _Function {
 		return params;
 	}
 
-	functionCall() {
+	functionCall(): FunctionCallToken | undefined {
 		const { pointer } = this;
 
-		if (!pointer.token) return null;
+		if (!pointer.token) return;
 
 		const next = pointer.previewNext();
-		if (next && next.type === 'Assignment') return null;
+		if (next && ['Operator', 'Assignment'].includes(next.type)) return;
 
-		const callWithAwait = pointer.token.type === 'AwaitKeyword';
-		pointer.take('AwaitKeyword');
+		const isAwait = Boolean(pointer.take('AwaitKeyword'));
 
-		const name = pointer.take('Identifier');
-		if (!name) return null;
+		const currentNext = pointer.previewNext(true, false);
+		if (!currentNext || !['Identifier'].includes(pointer.token.type)) return;
+
+		if (!['Whitespace'].includes(currentNext.type) && !['Not'].includes(currentNext.type)) {
+			return;
+		}
+
+		const name = pointer.take('Identifier', true, false);
+		pointer.take('Whitespace');
 
 		switch (pointer.token.type) {
 			case 'OpenParen': {
@@ -172,9 +167,10 @@ export class _Function {
 					});
 
 				return {
-					type: callWithAwait ? 'AsyncFunctionCall' : 'FunctionCall',
-					name,
+					type: 'FunctionCall',
+					name: name!,
 					params,
+					isAwait,
 				};
 			}
 
@@ -185,48 +181,65 @@ export class _Function {
 				const params = this.functionCallArgs();
 
 				return {
-					type: callWithAwait ? 'AsyncFunctionCall' : 'FunctionCall',
-					name,
+					type: 'FunctionCall',
+					name: name!,
 					params,
+					isAwait,
 				};
 			}
 		}
 	}
 
-	functionDeclaration() {
+	functionDeclaration(isClass = false): FunctionToken | undefined {
 		const { pointer } = this;
 
-		if (!pointer.token || !['FunctionKeyword', 'AsyncKeyword'].includes(pointer.token.type))
-			return null;
+		const types = isClass
+			? ['AsyncKeyword', 'Identifier', 'ConstructorKeyword']
+			: ['FunctionKeyword', 'AsyncKeyword'];
 
-		const isAsync = pointer.token.type == 'AsyncKeyword';
-		if (isAsync) {
-			pointer.take('AsyncKeyword');
+		if (!pointer.token || !types.includes(pointer.token.type)) return;
 
-			if (!pointer.token || pointer.token.type != 'FunctionKeyword')
+		const [async, func, name] = pointer.takeMultiple([
+			'AsyncKeyword',
+			'FunctionKeyword',
+			'Identifier',
+		]);
+
+		if (async) {
+			if (!func && !isClass && pointer.token.type != 'ConstructorKeyword')
 				new SyntaxError(pointer, {
 					lineError: pointer.line,
 					reason: 'Expected a function declaration',
 				});
 		}
 
-		pointer.take('FunctionKeyword');
-
-		const name = pointer.take('Identifier');
-		if (!name)
+		if (!name && pointer.token.type != 'ConstructorKeyword') {
 			new SyntaxError(this.pointer, {
 				lineError: pointer.line,
 				reason: 'Expected a function name',
 			});
 
+			return;
+		}
+
+		if (isClass && !name && async) {
+			new SyntaxError(pointer, {
+				lineError: pointer.line,
+				reason: `Unexpected token 'async'`,
+			});
+		}
+
+		const constructor = pointer.take('ConstructorKeyword')!;
+
 		const args = this.functionArgs();
 		const body = this.functionBody();
 
 		return {
-			type: isAsync ? 'AsyncFunctionDeclaration' : 'FunctionDeclaration',
-			name,
-			args,
+			type: 'FunctionDeclaration',
+			name: name ?? constructor,
 			body,
+			args,
+			isAsync: !!async,
 		};
 	}
 }

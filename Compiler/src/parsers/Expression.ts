@@ -1,4 +1,4 @@
-import { ParserPointer, Token } from '../utils/ParserPointer';
+import { ParserPointer } from '../utils/ParserPointer';
 import { SyntaxError } from '../errors/SyntaxError';
 
 import { Array } from './Array';
@@ -6,7 +6,8 @@ import { _Object } from './Object';
 import { RegExp } from './RegExp';
 import { Number } from './Number';
 import { String } from './String';
-import { Comments } from './Comments';
+import { Token } from '../types/token';
+import { BinaryExpressionToken, ParsedToken, TypeToken } from '../types/parsedToken';
 
 export class Expression {
 	private array: Array;
@@ -15,7 +16,7 @@ export class Expression {
 	private number: Number;
 	private string: String;
 
-	constructor(private pointer: ParserPointer, private comments: Comments) {
+	constructor(private pointer: ParserPointer) {
 		this.array = new Array(pointer, this);
 		this.object = new _Object(pointer, this);
 
@@ -24,7 +25,7 @@ export class Expression {
 		this.number = new Number(pointer);
 	}
 
-	private parenBinaryExpression() {
+	private parenBinaryExpression(): BinaryExpressionToken | undefined {
 		const { pointer } = this;
 
 		pointer.take('OpenParen');
@@ -46,14 +47,15 @@ export class Expression {
 			});
 
 		return {
-			...binary,
+			...(binary as any),
 			type: 'ParenBinaryExpression',
 		};
 	}
 
-	private binaryExpression(left: Token) {
+	private binaryExpression(): BinaryExpressionToken | Token | undefined {
 		const { pointer } = this;
 
+		const left = pointer.take('Identifier') ?? pointer.take('Number');
 		const next = pointer.previewNext();
 
 		if (
@@ -63,7 +65,7 @@ export class Expression {
 			pointer.token?.type === 'Operator' &&
 			pointer.token?.value === '/'
 		) {
-			return left;
+			return;
 		}
 
 		const operator = pointer.take('Operator');
@@ -78,42 +80,47 @@ export class Expression {
 
 		return {
 			type: 'BinaryExpression',
-			left,
+			left: left!,
 			operator: operator as Token,
 			right: right as Token,
 		};
 	}
 
-	private returnExpression() {
+	private returnExpression(): TypeToken | undefined {
 		const { pointer } = this;
 
-		if (!pointer.token) return null;
+		if (!pointer.token || !pointer.take('ReturnKeyword')) return;
 
-		pointer.take('ReturnKeyword');
-		const value = this.expression();
+		const value = this.expression(true);
 
 		return {
 			type: 'ReturnExpression',
-			value: value ? (value as Token) : 'undefined',
+			value: value ? (value as ParsedToken) : 'undefined',
 		};
 	}
 
-	private value() {
+	private value(): ParsedToken | undefined {
 		const { pointer } = this;
-		if (!pointer.token) return null;
+		if (!pointer.token) return;
 
 		let { token } = pointer;
+
+		if (['ThisKeyword', 'Identifier'].includes(token.type)) {
+			const value = this.object.objectProperty();
+
+			if (value) return value;
+		}
 
 		switch (token.type) {
 			case 'SingleQuote':
 			case 'DoubleQuote':
 				return this.string.string();
 
-			case 'OpenCurly':
-				return this.object.object();
-
 			case 'OpenSquare':
 				return this.array.array();
+
+			case 'OpenCurly':
+				return this.object.object();
 
 			case 'OpenParen':
 				return this.parenBinaryExpression();
@@ -130,30 +137,36 @@ export class Expression {
 			case 'Number':
 				token = this.number.number() as Token;
 
+			case 'ThisKeyword':
 			case 'Identifier':
-				const left = token;
+				const next = pointer.previewNext();
+
+				if (next) {
+					if (next.type === 'Dot' && ['Identifier', 'ThisKeyword'].includes(token.type)) {
+						return this.object.objectProperty();
+					}
+
+					if (next.type === 'Operator') {
+						return this.binaryExpression();
+					}
+				}
+
+				if (pointer.token.type == 'ThisKeyword') return;
 
 				pointer.next();
 
-				if (pointer.token?.type === 'Operator') {
-					return this.binaryExpression(left);
-				}
-
-				return left;
+				return token;
 
 			case 'Operator':
 				if (token.value === '/') {
 					return this.regexp.regexp();
 				}
-
-			default:
-				return null;
 		}
 	}
 
 	private allExprs() {
 		const { pointer } = this;
-		if (!pointer.token) return null;
+		if (!pointer.token) return;
 
 		let { token } = pointer;
 
@@ -166,7 +179,7 @@ export class Expression {
 		}
 	}
 
-	expression(isValue = false): Token | null {
+	expression(isValue = false): ParsedToken | undefined {
 		return isValue ? this.value() : this.allExprs();
 	}
 }

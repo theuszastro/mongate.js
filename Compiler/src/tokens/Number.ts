@@ -1,3 +1,4 @@
+import { Token } from '../types/token';
 import { Pointer } from '../utils/Pointer';
 
 export class Number {
@@ -7,10 +8,10 @@ export class Number {
 		return /\d/.test(char);
 	}
 
-	number() {
+	number(): Token | undefined {
 		const { pointer } = this;
 
-		if (!this.isNumber(pointer.char)) return null;
+		if (!this.isNumber(pointer.char)) return;
 
 		const value = pointer.char;
 		pointer.next();

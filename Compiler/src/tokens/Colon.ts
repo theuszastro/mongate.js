@@ -1,10 +1,11 @@
+import { Token } from '../types/token';
 import { Pointer } from '../utils/Pointer';
 
 export class Colon {
 	constructor(private pointer: Pointer) {}
 
-	comma() {
-		if (this.pointer.char != ',') return null;
+	comma(): Token | undefined {
+		if (this.pointer.char != ',') return;
 
 		this.pointer.next();
 
@@ -15,8 +16,8 @@ export class Colon {
 		};
 	}
 
-	colon() {
-		if (this.pointer.char != ':') return null;
+	colon(): Token | undefined {
+		if (this.pointer.char != ':') return;
 
 		this.pointer.next();
 
@@ -27,8 +28,8 @@ export class Colon {
 		};
 	}
 
-	semicolon() {
-		if (this.pointer.char != ';') return null;
+	semicolon(): Token | undefined {
+		if (this.pointer.char != ';') return;
 
 		this.pointer.next();
 
