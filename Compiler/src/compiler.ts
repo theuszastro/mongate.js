@@ -9,10 +9,10 @@ type ConfigType = {
 };
 
 export class Compiler {
-	constructor(private config: ConfigType) {}
+	constructor() {}
 
-	run() {
-		const { filename, content } = this.config;
+	run(config: ConfigType) {
+		const { filename, content } = config;
 
 		const tokenizer = new Tokenizer(filename, content);
 		const parser = new Parser(tokenizer, content, filename);
