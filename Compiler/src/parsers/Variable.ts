@@ -3,12 +3,7 @@ import { SyntaxError } from '../errors/SyntaxError';
 
 import { Identifier } from '../tokens';
 import { Token } from '../types/token';
-import {
-	DefaultToken,
-	VariableAssignment,
-	VariablesType,
-	VariableToken,
-} from '../types/parsedToken';
+import { VariableAssignment, VariablesType, VariableToken } from '../types/parsedToken';
 
 export class Variable {
 	private keywords: string[] = [];
@@ -25,6 +20,7 @@ export class Variable {
 		if (!pointer.token || !next || (next.type != 'Assignment' && next.type != 'Operator'))
 			return;
 
+		const line = pointer.line;
 		const [name, assignment] = pointer.takeMultiple(['Identifier', 'Assignment']);
 		if (!name) return;
 
@@ -55,6 +51,7 @@ export class Variable {
 					name,
 					value,
 					operator,
+					ctx: pointer.ctx(line),
 				};
 			}
 
@@ -77,6 +74,7 @@ export class Variable {
 			name,
 			value,
 			operator,
+			ctx: pointer.ctx(line),
 		};
 	}
 
@@ -138,6 +136,7 @@ export class Variable {
 
 		return {
 			type: `VariableDeclaration`,
+			ctx: pointer.ctx(errObj.lineError),
 			...(isMultiple
 				? {
 						variables,

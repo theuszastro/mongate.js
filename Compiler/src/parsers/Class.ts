@@ -33,6 +33,7 @@ export class Class {
 		const { pointer } = this;
 		if (!pointer.token || !pointer.take('ClassKeyword')) return null;
 
+		const line = pointer.line;
 		const name = pointer.take('Identifier');
 		if (!name)
 			new SyntaxError(pointer, {
@@ -50,6 +51,7 @@ export class Class {
 			type: 'ClassDeclaration',
 			name,
 			body,
+			ctx: pointer.ctx(line),
 		};
 	}
 }

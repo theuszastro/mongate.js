@@ -34,6 +34,7 @@ export class _Object {
 		const next = pointer.previewNext();
 		if (next && next.type != 'Dot') return;
 
+		const lineError = pointer.line;
 		let name = pointer.take(pointer.token.type)!.value as string;
 
 		for (;;) {
@@ -59,12 +60,13 @@ export class _Object {
 			return {
 				type: 'ObjectPropertyRead',
 				name,
+				ctx: pointer.ctx(lineError),
 			};
 
 		const value = this.expression.expression(true);
 		if (!value)
 			new SyntaxError(pointer, {
-				lineError: pointer.line,
+				lineError,
 				reason: `Expected a value`,
 			});
 
@@ -72,13 +74,15 @@ export class _Object {
 			type: 'ObjectPropertyAssignment',
 			name,
 			value,
-		};
+			ctx: pointer.ctx(lineError),
+		} as DefaultToken;
 	}
 
 	object(): ObjectToken | undefined {
 		const { pointer } = this;
 		if (!pointer.token) return;
 
+		const startLine = pointer.line;
 		pointer.take('OpenCurly');
 
 		const properties: ParsedToken[] = [];
@@ -104,26 +108,30 @@ export class _Object {
 			}
 
 			const value = this.expression.expression(true);
-			if (!value)
+			if (!value) {
 				new SyntaxError(this.pointer, {
 					lineError,
 					reason: 'Expected a value',
 				});
 
+				return;
+			}
+
 			if (!pointer.take('Comma')) {
 				const property = this.readProperty();
-				if (property) {
+
+				if (property)
 					new SyntaxError(pointer, {
 						lineError,
 						reason: `Expected a ','`,
 					});
-				}
 			}
 
 			properties.push({
 				type: 'ObjectProperty',
-				name: property,
+				name: property as Token,
 				value,
+				ctx: pointer.ctx(lineError),
 			});
 		}
 
@@ -132,6 +140,7 @@ export class _Object {
 		return {
 			type: 'Object',
 			properties,
+			ctx: pointer.ctx(startLine),
 		};
 	}
 }

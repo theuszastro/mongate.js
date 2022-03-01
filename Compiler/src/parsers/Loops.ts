@@ -21,7 +21,10 @@ export class Loops {
 			if (pointer.take('EndKeyword')) break;
 			if (pointer.token) {
 				if (['BreakKeyword', 'ContinueKeyword'].includes(pointer.token.type)) {
-					body.push(pointer.token);
+					body.push({
+						...pointer.token,
+						ctx: pointer.ctx(pointer.line),
+					});
 
 					pointer.take(pointer.token.type);
 
@@ -54,6 +57,7 @@ export class Loops {
 		return {
 			type: 'LoopDeclaration',
 			body,
+			ctx: pointer.ctx(line),
 		};
 	}
 

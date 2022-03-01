@@ -14,6 +14,8 @@ export class Array {
 
 		const values: ParsedToken[] = [];
 
+		const line = pointer.line;
+
 		for (;;) {
 			if (!pointer.token || ['CloseSquare', 'EndFile'].includes(pointer.token.type)) break;
 
@@ -54,6 +56,7 @@ export class Array {
 		return {
 			type: 'Array',
 			values,
+			ctx: pointer.ctx(line),
 		};
 	}
 }

@@ -51,6 +51,7 @@ export class String {
 		return {
 			type: 'String',
 			value,
+			ctx: pointer.ctx(lineError),
 		};
 	}
 }

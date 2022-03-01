@@ -42,12 +42,15 @@ export class Comments {
 	comment(onlyReadLine = false) {
 		const { pointer } = this;
 
+		const line = pointer.line;
+
 		if (onlyReadLine) {
 			const value = this.readLine();
 
 			return {
 				type: 'Comment',
 				value: value,
+				ctx: pointer.ctx(line),
 			};
 		}
 
@@ -71,6 +74,7 @@ export class Comments {
 		return {
 			type: 'Comment',
 			value: value,
+			ctx: pointer.ctx(line),
 		};
 	}
 }

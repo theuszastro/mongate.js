@@ -24,7 +24,7 @@ export class SyntaxError extends Logger {
 		this.setup();
 	}
 
-	private getLines(start: number) {
+	getLines(start: number) {
 		const lines: ErrorLine[] = [];
 
 		if (start > 0) {

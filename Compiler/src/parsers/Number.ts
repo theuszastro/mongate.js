@@ -10,6 +10,7 @@ export class Number {
 		if (!pointer.token || !['Number'].includes(pointer.token.type)) return;
 
 		let value = '';
+		const lineError = pointer.line;
 
 		for (;;) {
 			const next = pointer.previewNext(true, false);
@@ -18,7 +19,7 @@ export class Number {
 			if (value.endsWith('.')) {
 				if (['Dot', 'Identifier'].includes(pointer.token.type)) {
 					new SyntaxError(pointer, {
-						lineError: pointer.line,
+						lineError,
 						reason: `Unexpected token '${pointer.token.value}'`,
 					});
 				}
@@ -33,7 +34,7 @@ export class Number {
 
 		if (value.endsWith('e'))
 			new SyntaxError(this.pointer, {
-				lineError: pointer.line,
+				lineError,
 				reason: `Unexpected 'e'`,
 			});
 
@@ -44,6 +45,7 @@ export class Number {
 		return {
 			type: 'Number',
 			value,
+			ctx: pointer.ctx(lineError),
 		};
 	}
 }

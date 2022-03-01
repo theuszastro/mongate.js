@@ -52,7 +52,7 @@ export class Expression {
 		};
 	}
 
-	private binaryExpression(): BinaryExpressionToken | Token | undefined {
+	private binaryExpression(): BinaryExpressionToken | ParsedToken | undefined {
 		const { pointer } = this;
 
 		const left = pointer.take('Identifier') ?? pointer.take('Number');
@@ -68,21 +68,26 @@ export class Expression {
 			return;
 		}
 
+		const lineError = pointer.line;
 		const operator = pointer.take('Operator');
 		const allowedExpr = ['Number', 'Identifier', 'ParenBinaryExpression', 'BinaryExpression'];
 
 		const right = this.expression(true);
-		if (!right || !allowedExpr.includes((right as Token).type))
+		if (!right || !allowedExpr.includes(right.type)) {
 			new SyntaxError(pointer, {
-				lineError: pointer.line,
+				lineError,
 				reason: 'Expected a right expression',
 			});
+
+			return;
+		}
 
 		return {
 			type: 'BinaryExpression',
 			left: left!,
-			operator: operator as Token,
-			right: right as Token,
+			right,
+			operator: operator!,
+			ctx: pointer.ctx(lineError),
 		};
 	}
 
@@ -96,6 +101,7 @@ export class Expression {
 		return {
 			type: 'ReturnExpression',
 			value: value ? (value as ParsedToken) : 'undefined',
+			ctx: pointer.ctx(pointer.line),
 		};
 	}
 
@@ -129,38 +135,39 @@ export class Expression {
 			case 'NullExpr':
 			case 'UndefinedExpr':
 				const _token = token;
+				const line = pointer.line;
 
 				pointer.next();
 
-				return _token;
+				return { ..._token, ctx: pointer.ctx(line) };
 
 			case 'Number':
-				token = this.number.number() as Token;
+				token = this.number.number() as any;
 
 			case 'ThisKeyword':
-			case 'Identifier':
+			case 'Identifier': {
 				const next = pointer.previewNext();
 
 				if (next) {
-					if (next.type === 'Dot' && ['Identifier', 'ThisKeyword'].includes(token.type)) {
+					if (next.type === 'Dot' && ['Identifier', 'ThisKeyword'].includes(token.type))
 						return this.object.objectProperty();
-					}
 
-					if (next.type === 'Operator') {
-						return this.binaryExpression();
-					}
+					if (next.type === 'Operator') return this.binaryExpression();
 				}
 
-				if (pointer.token.type == 'ThisKeyword') return;
+				const line = pointer.line;
 
-				pointer.next();
+				if (pointer.token.type != 'ThisKeyword') {
+					pointer.next();
 
-				return token;
+					return { ...token, ctx: pointer.ctx(line) };
+				}
+
+				return;
+			}
 
 			case 'Operator':
-				if (token.value === '/') {
-					return this.regexp.regexp();
-				}
+				if (token.value === '/') return this.regexp.regexp();
 		}
 	}
 

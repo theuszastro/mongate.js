@@ -1,4 +1,5 @@
 import { Tokenizer } from '../tokenizer';
+import { TypeToken } from '../types/parsedToken';
 import { Token } from '../types/token';
 
 export class ParserPointer {
@@ -7,7 +8,7 @@ export class ParserPointer {
 
 	public line = 1;
 
-	constructor(private tokenizer: Tokenizer, public filename: string, private content: string) {}
+	constructor(private tokenizer: Tokenizer, private content: string, public filename: string) {}
 
 	memorize() {
 		return this.tokenizer.pointer.memorize();
@@ -19,6 +20,12 @@ export class ParserPointer {
 
 	previewNext(skipNewline = true, skipWhiteSpace = true) {
 		return this.tokenizer.previewNext(skipNewline, skipWhiteSpace);
+	}
+
+	ctx(line: number) {
+		const lineContent = this.getLine(line);
+
+		return { lineContent, line };
 	}
 
 	next(skipSemicolon = true, skipWhiteSpace = true, skipNewline = true) {

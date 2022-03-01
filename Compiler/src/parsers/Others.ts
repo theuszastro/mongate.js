@@ -28,6 +28,7 @@ export class Others {
 		return {
 			type: 'ScapeCarecter',
 			value: `\\${value.value}`,
+			ctx: pointer.ctx(pointer.line),
 		};
 	}
 

@@ -5,7 +5,6 @@ import { Expression } from './Expression';
 import { Identifier } from '../tokens';
 
 import { VariablesType, VariableToken } from '../types/parsedToken';
-import { Token } from '../types/token';
 
 export class Constant {
 	private keywords: string[] = [];
@@ -77,6 +76,7 @@ export class Constant {
 
 		return {
 			type: 'ConstantDeclaration',
+			ctx: pointer.ctx(errObj.lineError),
 			...(isMultiple
 				? {
 						variables,

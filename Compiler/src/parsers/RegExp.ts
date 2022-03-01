@@ -22,6 +22,8 @@ export class RegExp {
 		const operator = pointer.take('Operator');
 		if (!pointer.token || !operator || operator.value != '/') return;
 
+		const lineError = pointer.line;
+
 		for (;;) {
 			if (!pointer.token || pointer.token.type == 'EndFile') break;
 
@@ -49,7 +51,7 @@ export class RegExp {
 					}
 
 					new SyntaxError(pointer, {
-						lineError: pointer.line,
+						lineError,
 						reason: `RegExp invalid flag '${flag}'`,
 					});
 				}
@@ -60,7 +62,7 @@ export class RegExp {
 			new global.RegExp(this.value, this.flags);
 		} catch (e) {
 			new SyntaxError(pointer, {
-				lineError: pointer.line,
+				lineError,
 				reason: `Invalid regular expression`,
 			});
 		}
@@ -69,6 +71,7 @@ export class RegExp {
 			type: 'RegExp',
 			value: this.value,
 			flags: this.flags,
+			ctx: pointer.ctx(lineError),
 		};
 	}
 }

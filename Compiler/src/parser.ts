@@ -27,7 +27,6 @@ export class Parser {
 		this.parserPointer = new ParserPointer(this.tokenizer, content, filename);
 
 		this.stmt = this.stmt.bind(this);
-		this.argStmt = this.argStmt.bind(this);
 		this.valueStmt = this.valueStmt.bind(this);
 
 		this.comments = new Comments(this.parserPointer);
@@ -35,7 +34,7 @@ export class Parser {
 		this.loops = new Loops(this.parserPointer, this.stmt);
 		this.variable = new Variable(this.parserPointer, this.stmt);
 		this.constant = new Constant(this.parserPointer, this.expression);
-		this.function = new _Function(this.parserPointer, this.expression, this.stmt, this.argStmt);
+		this.function = new _Function(this.parserPointer, this.expression, this.stmt);
 		this.classes = new Class(this.parserPointer, this.function, this.stmt);
 	}
 
@@ -66,13 +65,6 @@ export class Parser {
 
 		const expr = this.expression.expression();
 		if (expr) return expr;
-	}
-
-	argStmt() {
-		const funcCall = this.function.functionCall();
-		if (funcCall) return funcCall;
-
-		return;
 	}
 
 	valueStmt() {
@@ -116,7 +108,7 @@ export class Parser {
 		}
 
 		// @ts-ignore
-		console.log(stmts[0].body[1].body[0].value.properties);
+		// console.log(stmts);
 
 		return {
 			filename: this.filename,

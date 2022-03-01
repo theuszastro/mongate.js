@@ -9,8 +9,7 @@ export class _Function {
 	constructor(
 		private pointer: ParserPointer,
 		private expression: Expression,
-		private stmt: Function,
-		private argStmt: Function
+		private stmt: Function
 	) {}
 
 	private functionArgs(): FunctionArg[] {
@@ -40,6 +39,7 @@ export class _Function {
 				type: 'FunctionArg',
 				name,
 				default: 'undefined',
+				ctx: pointer.ctx(pointer.line),
 			} as FunctionArg;
 
 			switch (pointer.token.type) {
@@ -47,13 +47,16 @@ export class _Function {
 					pointer.take('Assignment');
 
 					const value = this.expression.expression(true);
-					if (!value)
+					if (!value) {
 						new SyntaxError(pointer, {
 							lineError: pointer.line,
 							reason: 'Expected a default param value',
 						});
 
-					arg.default = value as Token;
+						break;
+					}
+
+					arg.default = value;
 
 					const next = pointer.previewNext();
 					if ((pointer.token.type as string) == 'Comma') {
@@ -141,17 +144,12 @@ export class _Function {
 		const next = pointer.previewNext();
 		if (next && ['Operator', 'Assignment'].includes(next.type)) return;
 
+		const lineError = pointer.line;
 		const isAwait = Boolean(pointer.take('AwaitKeyword'));
 
-		const currentNext = pointer.previewNext(true, false);
-		if (!currentNext || !['Identifier'].includes(pointer.token.type)) return;
-
-		if (!['Whitespace'].includes(currentNext.type) && !['Not'].includes(currentNext.type)) {
-			return;
-		}
+		if (!['Identifier'].includes(pointer.token.type)) return;
 
 		const name = pointer.take('Identifier', true, false);
-		pointer.take('Whitespace');
 
 		switch (pointer.token.type) {
 			case 'OpenParen': {
@@ -162,7 +160,7 @@ export class _Function {
 				const close = pointer.take('CloseParen');
 				if (!close)
 					new SyntaxError(pointer, {
-						lineError: pointer.line,
+						lineError,
 						reason: `Expected a ')'`,
 					});
 
@@ -171,6 +169,7 @@ export class _Function {
 					name: name!,
 					params,
 					isAwait,
+					ctx: pointer.ctx(lineError),
 				};
 			}
 
@@ -185,6 +184,7 @@ export class _Function {
 					name: name!,
 					params,
 					isAwait,
+					ctx: pointer.ctx(lineError),
 				};
 			}
 		}
@@ -199,6 +199,7 @@ export class _Function {
 
 		if (!pointer.token || !types.includes(pointer.token.type)) return;
 
+		const lineError = pointer.line;
 		const [async, func, name] = pointer.takeMultiple([
 			'AsyncKeyword',
 			'FunctionKeyword',
@@ -208,26 +209,25 @@ export class _Function {
 		if (async) {
 			if (!func && !isClass && pointer.token.type != 'ConstructorKeyword')
 				new SyntaxError(pointer, {
-					lineError: pointer.line,
+					lineError,
 					reason: 'Expected a function declaration',
 				});
 		}
 
 		if (!name && pointer.token.type != 'ConstructorKeyword') {
 			new SyntaxError(this.pointer, {
-				lineError: pointer.line,
+				lineError,
 				reason: 'Expected a function name',
 			});
 
 			return;
 		}
 
-		if (isClass && !name && async) {
+		if (isClass && !name && async)
 			new SyntaxError(pointer, {
-				lineError: pointer.line,
+				lineError,
 				reason: `Unexpected token 'async'`,
 			});
-		}
 
 		const constructor = pointer.take('ConstructorKeyword')!;
 
@@ -240,6 +240,7 @@ export class _Function {
 			body,
 			args,
 			isAsync: !!async,
+			ctx: pointer.ctx(lineError),
 		};
 	}
 }
