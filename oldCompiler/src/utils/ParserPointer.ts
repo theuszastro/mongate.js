@@ -36,14 +36,18 @@ export class ParserPointer {
 
 		switch (this.token.type) {
 			case 'Semicolon':
-				if (!skipSemicolon) {
-					break;
+				if (skipSemicolon) {
+					this.next();
 				}
 
+				break;
+
 			case 'Whitespace':
-				if (!skipWhiteSpace) {
-					break;
+				if (skipWhiteSpace) {
+					this.next();
 				}
+
+				break;
 
 			case 'Comment':
 				this.next();

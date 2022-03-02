@@ -2,6 +2,7 @@ import { SyntaxError } from '../errors/SyntaxError';
 
 import {
 	DefaultToken,
+	ObjectProperty,
 	ObjectPropertyReadToken,
 	ObjectToken,
 	ParsedToken,
@@ -16,13 +17,13 @@ export class _Object {
 
 	private readProperty() {
 		const { pointer } = this;
-		if (!pointer.token) return null;
+		if (!pointer.token) return;
 
 		const name = pointer.take('Identifier');
 		if (name) return name;
 
 		const expr = this.expression.expression(true);
-		if (!expr || expr.type != 'String') return null;
+		if (!expr || expr.type != 'String') return;
 
 		return expr;
 	}
@@ -85,7 +86,7 @@ export class _Object {
 		const startLine = pointer.line;
 		pointer.take('OpenCurly');
 
-		const properties: ParsedToken[] = [];
+		const properties: ObjectProperty[] = [];
 
 		while (pointer.token.type != 'CloseCurly') {
 			const lineError = pointer.line;
@@ -95,16 +96,12 @@ export class _Object {
 
 			const colon = pointer.take('Colon');
 			if (!colon) {
-				if (pointer.token?.type === 'Comma' || pointer.token?.type === 'CloseCurly') {
-					pointer.take('Comma');
-
-					continue;
-				}
-
 				new SyntaxError(pointer, {
 					lineError,
 					reason: `Expected a ':'`,
 				});
+
+				return;
 			}
 
 			const value = this.expression.expression(true);

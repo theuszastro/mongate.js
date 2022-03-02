@@ -57,6 +57,11 @@ export type FunctionArg = Base & {
 	default: Token | string | ParsedToken;
 };
 
+export type ObjectProperty = Base & {
+	name: Token;
+	value: ParsedToken;
+};
+
 export type FunctionToken = Base & {
 	name: Token;
 	args: FunctionArg[];
@@ -70,7 +75,7 @@ export type DefaultToken = Base & {
 };
 
 export type ObjectToken = Base & {
-	properties: Array<Token | ParsedToken>;
+	properties: Array<ObjectProperty>;
 };
 
 export type BinaryExpressionToken = Base & {

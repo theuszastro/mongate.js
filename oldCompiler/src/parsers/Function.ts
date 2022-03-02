@@ -1,7 +1,6 @@
 import { SyntaxError } from '../errors/SyntaxError';
 import { ParserPointer } from '../utils/ParserPointer';
 
-import { Token } from '../types/token';
 import { Expression } from './Expression';
 import { FunctionArg, FunctionCallToken, FunctionToken, ParsedToken } from '../types/parsedToken';
 
@@ -105,16 +104,9 @@ export class _Function {
 		const { pointer } = this;
 
 		const params: ParsedToken[] = [];
-		const data = ['Identifier'];
 
 		for (;;) {
-			if (
-				!pointer.token ||
-				pointer.take('EndFile') ||
-				data.includes(pointer.token.type) ||
-				pointer.token.type.endsWith('Keyword')
-			)
-				break;
+			if (!pointer.token || pointer.take('EndFile')) break;
 
 			const comma = pointer.take('Comma');
 			const lineError = pointer.line;
@@ -177,6 +169,8 @@ export class _Function {
 				pointer.take('Not');
 
 			default: {
+				pointer.take('Whitespace');
+
 				const params = this.functionCallArgs();
 
 				return {

@@ -83,13 +83,13 @@ export class Variable {
 
 		if (!pointer.token || !pointer.take('VariableKeyword')) return;
 
+		let isMultiple = false;
+		const variables: VariablesType[] = [];
+
 		const errObj = {
 			lineError: pointer.line,
 			reason: '',
 		};
-
-		let isMultiple = false;
-		const variables: VariablesType[] = [];
 
 		for (;;) {
 			const [name, assign] = pointer.takeMultiple(['Identifier', 'Assignment']);
@@ -133,6 +133,8 @@ export class Variable {
 
 			break;
 		}
+
+		console.log(errObj.lineError, pointer.line);
 
 		return {
 			type: `VariableDeclaration`,

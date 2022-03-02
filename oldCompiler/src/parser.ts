@@ -88,6 +88,7 @@ export class Parser {
 				if (parserPointer.token.type == 'EndFile') break;
 
 				const token = this.stmt();
+
 				if (!token) {
 					if (parserPointer.token.type != 'EndFile') {
 						const { token: pToken } = parserPointer;
@@ -108,7 +109,7 @@ export class Parser {
 		}
 
 		// @ts-ignore
-		// console.log(stmts);
+		console.log(stmts[0].args);
 
 		return {
 			filename: this.filename,
