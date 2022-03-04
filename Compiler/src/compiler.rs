@@ -1,8 +1,9 @@
+// use std::thread;
+
+use crate::errors::syntax_error::{SyntaxError, SyntaxErrorConfig};
 use crate::tokenizer::Tokenizer;
-use crate::utils::pointer::Pointer;
 
 pub struct Compiler {
-    pointer: Pointer,
     config: CompilerConfig,
 }
 
@@ -15,14 +16,7 @@ pub struct CompilerConfig {
 
 impl Compiler {
     pub fn new(config: CompilerConfig) -> Self {
-        let CompilerConfig {
-            filename, content, ..
-        } = config.clone();
-
-        Self {
-            config,
-            pointer: Pointer::new(content, filename),
-        }
+        Self { config }
     }
 
     pub fn run(&mut self) {
@@ -30,18 +24,17 @@ impl Compiler {
             filename,
             content,
             json,
-        } = &self.config;
+        } = self.config.clone();
 
-        let mut tokenizer = Tokenizer::new(
-            filename.clone(),
-            content.clone(),
-            json.clone(),
-            self.pointer.clone(),
-        );
-
+        let mut tokenizer = Tokenizer::new(filename.clone(), content.clone(), json.clone());
         let tokens = tokenizer.run();
-        for token in tokens {
-            println!("{:?}", token);
-        }
+
+        SyntaxError::new(SyntaxErrorConfig::new(
+            filename.clone(),
+            tokenizer.lines,
+            json.clone(),
+            10,
+            tokens,
+        ));
     }
 }
