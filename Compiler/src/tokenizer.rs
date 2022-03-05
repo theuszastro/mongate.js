@@ -100,9 +100,9 @@ impl Tokenizer {
         let line = self.lines.get(self.line - 1);
 
         if let Some(currentLine) = line {
-            let lineContent = currentLine.iter().nth(self.cursor);
+            let letters = currentLine.iter().nth(self.cursor);
 
-            if let Some(content) = lineContent {
+            if let Some(content) = letters {
                 self.letter = content.to_string();
 
                 return;
@@ -157,8 +157,10 @@ impl Tokenizer {
             "&" | "|" => _token = Some(Token::LogicalOperator(letter, context)),
             "null" => _token = Some(Token::Null(context)),
             "undefined" => _token = Some(Token::Undefined(context)),
+            "@" | "$" | "^" | "\\" | "#" | "'" | "\"" => {
+                _token = Some(Token::Symbol(letter, context))
+            }
             " " => _token = Some(Token::Whitespace(context)),
-            "@" => _token = Some(Token::Symbol(letter, context)),
             "\n" => {
                 self.newline();
 

@@ -47,8 +47,11 @@ impl Parser {
         skipWhitespace: bool,
     ) -> Option<Token> {
         match self.tokenizer.getToken() {
-            Some(Token::EOF) => None,
-            None => None,
+            None | Some(Token::EOF) => {
+                self.token = None;
+
+                None
+            }
             Some(Token::Newline(_)) if skipNewline => {
                 return self.next(skipNewline, skipSemicolon, skipWhitespace)
             }
@@ -101,7 +104,7 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Option<Expression> {
-        let expr = match self.token.clone() {
+        match self.token.clone() {
             Some(Token::Undefined(_)) => Some(Expression::Undefined),
             Some(Token::Null(_)) => Some(Expression::Null),
             Some(Token::Identifier(data, _)) => {
@@ -110,6 +113,43 @@ impl Parser {
                 }
 
                 Some(Expression::Identifier(data))
+            }
+            Some(Token::Symbol(sym, _)) if ["'", "\""].contains(&sym.as_str()) => {
+                let delimiter = sym.clone();
+
+                self.take("Symbol", false, false, false);
+
+                let mut string = String::new();
+
+                loop {
+                    match self.token.clone() {
+                        Some(Token::Newline(_)) => break,
+                        Some(Token::Symbol(sym, _)) if ["'", "\""].contains(&sym.as_str()) => {
+                            if string.ends_with("\\") {
+                                string.push_str(sym.as_str());
+
+                                self.next(false, false, false);
+
+                                continue;
+                            }
+
+                            break;
+                        }
+                        Some(data) => {
+                            string.push_str(data.tokenValue().as_str());
+
+                            self.next(false, false, false);
+                        }
+                        None => break,
+                    }
+                }
+
+                let close = self.take("Symbol", true, true, true);
+                if close.is_none() || close.unwrap().tokenValue() != delimiter {
+                    self.error(format!("Expected '{}'", delimiter));
+                }
+
+                Some(Expression::String(string))
             }
             Some(Token::Brackets(bra, _)) if bra == "(" => {
                 self.take("Brackets", true, true, true);
@@ -197,9 +237,7 @@ impl Parser {
                 Some(Expression::Number(number))
             }
             _ => None,
-        };
-
-        expr
+        }
     }
 
     pub fn run(&mut self) {

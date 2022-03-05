@@ -12,6 +12,7 @@ impl CodeGeneration {
             Expression::Null => "null".to_string(),
             Expression::Number(v) => v.clone(),
             Expression::Identifier(v) => v.clone(),
+            Expression::String(data) => format!("`{}`", data),
             Expression::Binary(l, op, r) => {
                 format!(
                     "{} {} {}",
