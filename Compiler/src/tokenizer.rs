@@ -8,7 +8,7 @@ pub struct TokenContext {
     pub lineContent: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Token {
     Identifier(String, TokenContext),
     Number(String, TokenContext),
@@ -21,17 +21,57 @@ pub enum Token {
     Keyword(String, TokenContext),
     Punctuation(String, TokenContext),
     Brackets(String, TokenContext),
+    Symbol(String, TokenContext),
     EOF,
 }
 
+impl Token {
+    pub fn tokenType(&self) -> String {
+        match self {
+            Token::Identifier(_, _) => "Identifier".to_string(),
+            Token::Number(_, _) => "Number".to_string(),
+            Token::Null(_) => "Null".to_string(),
+            Token::Undefined(_) => "Undefined".to_string(),
+            Token::Whitespace(_) => "Whitespace".to_string(),
+            Token::Newline(_) => "Newline".to_string(),
+            Token::LogicalOperator(_, _) => "LogicalOperator".to_string(),
+            Token::Operator(_, _) => "Operator".to_string(),
+            Token::Keyword(_, _) => "Keyword".to_string(),
+            Token::Punctuation(_, _) => "Punctuation".to_string(),
+            Token::Brackets(_, _) => "Brackets".to_string(),
+            Token::Symbol(_, _) => "Symbol".to_string(),
+            Token::EOF => "EOF".to_string(),
+        }
+    }
+
+    pub fn tokenValue(&self) -> String {
+        match self {
+            Token::Identifier(data, _) => data.to_string(),
+            Token::Number(data, _) => data.to_string(),
+            Token::Null(_) => "null".to_string(),
+            Token::Undefined(_) => "undefined".to_string(),
+            Token::Whitespace(_) => " ".to_string(),
+            Token::Newline(_) => "\n".to_string(),
+            Token::LogicalOperator(data, _) => data.to_string(),
+            Token::Operator(data, _) => data.to_string(),
+            Token::Keyword(data, _) => data.to_string(),
+            Token::Punctuation(data, _) => data.to_string(),
+            Token::Brackets(data, _) => data.to_string(),
+            Token::Symbol(data, _) => data.to_string(),
+            Token::EOF => "EOF".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Tokenizer {
     pub filename: String,
     pub content: String,
     pub json: bool,
     pub lines: Vec<Vec<String>>,
+    pub line: usize,
 
     cursor: usize,
-    line: usize,
     letter: String,
     keywords: Vec<String>,
 }
@@ -94,7 +134,7 @@ impl Tokenizer {
         self.changeLetter();
     }
 
-    fn getToken(&mut self) -> Option<Token> {
+    pub fn getToken(&mut self) -> Option<Token> {
         let mut _token: Option<Token> = None;
 
         let letter = self.letter.clone();
@@ -108,6 +148,7 @@ impl Tokenizer {
             "null" => _token = Some(Token::Null(context)),
             "undefined" => _token = Some(Token::Undefined(context)),
             " " => _token = Some(Token::Whitespace(context)),
+            "@" => _token = Some(Token::Symbol(letter, context)),
             "\n" => {
                 self.newline();
 
@@ -192,26 +233,5 @@ impl Tokenizer {
             .map(|data| data.to_string())
             .collect(),
         }
-    }
-
-    pub fn run(&mut self) -> Vec<Token> {
-        let mut tokens: Vec<Token> = vec![];
-
-        loop {
-            let token = self.getToken();
-
-            match token {
-                Some(Token::EOF) => break,
-                None => break,
-                Some(Token::Identifier(data, _)) if data.len() <= 0 => {
-                    break;
-                }
-                _ => {}
-            }
-
-            tokens.push(token.unwrap());
-        }
-
-        return tokens;
     }
 }

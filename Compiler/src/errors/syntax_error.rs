@@ -1,4 +1,8 @@
-use crate::tokenizer::Token;
+use std::process;
+
+use serde_derive::Serialize;
+use serde_json::to_string;
+
 use crate::utils::logger::Logger;
 
 #[derive(Debug)]
@@ -7,13 +11,20 @@ pub struct ErrorLine {
     pub lineContent: String,
 }
 
+#[derive(Serialize)]
+struct SyntaxErrorJson {
+    reason: String,
+    line: i64,
+    lineContent: String,
+}
+
 pub struct SyntaxError {}
 pub struct SyntaxErrorConfig {
     pub line: usize,
     pub lines: Vec<Vec<String>>,
     pub json: bool,
     pub filename: String,
-    pub tokens: Vec<Token>,
+    pub reason: String,
 }
 
 impl SyntaxErrorConfig {
@@ -22,14 +33,14 @@ impl SyntaxErrorConfig {
         lines: Vec<Vec<String>>,
         json: bool,
         line: usize,
-        tokens: Vec<Token>,
+        reason: String,
     ) -> Self {
         Self {
             filename,
             lines,
             json,
             line,
-            tokens,
+            reason,
         }
     }
 }
@@ -45,31 +56,31 @@ impl SyntaxError {
         "".to_string()
     }
 
-    fn getLines(line: usize, lines: Vec<Vec<String>>) -> Vec<ErrorLine> {
+    fn getLines(line: i64, lines: Vec<Vec<String>>) -> Vec<ErrorLine> {
         let mut errorLines: Vec<ErrorLine> = Vec::new();
 
         if line - 1 > 0 {
             for i in [5, 4, 3, 2, 1] {
                 if line - 1 - i > 0 {
                     errorLines.push(ErrorLine {
-                        line: line - i,
-                        lineContent: SyntaxError::getLine(lines.clone(), line - 1 - i),
+                        line: (line - i) as usize,
+                        lineContent: SyntaxError::getLine(lines.clone(), (line - 1 - i) as usize),
                     })
                 }
             }
         }
 
         errorLines.push(ErrorLine {
-            line,
-            lineContent: SyntaxError::getLine(lines.clone(), line - 1),
+            line: line as usize,
+            lineContent: SyntaxError::getLine(lines.clone(), (line - 1) as usize),
         });
 
         for i in [1, 2, 3, 4, 5] {
-            let lineContent = SyntaxError::getLine(lines.clone(), line - 1 + i);
+            let lineContent = SyntaxError::getLine(lines.clone(), (line - 1 + i) as usize);
 
             if lineContent != "" {
                 errorLines.push(ErrorLine {
-                    line: line + i,
+                    line: (line + i) as usize,
                     lineContent,
                 });
             }
@@ -79,11 +90,32 @@ impl SyntaxError {
     }
 
     pub fn new(config: SyntaxErrorConfig) {
-        let lines = SyntaxError::getLines(config.line, config.lines);
-        let logger = Logger::new(config.filename);
+        let SyntaxErrorConfig {
+            line,
+            lines,
+            filename,
+            reason,
+            json,
+        } = config;
 
-        logger.error("SyntaxError on".to_string(), config.line);
-        logger.lines(lines);
-        logger.info("Unexpected '='".to_string());
+        if json {
+            let errLine = SyntaxError::getLine(lines, line);
+
+            let err = SyntaxErrorJson {
+                reason,
+                line: line as i64,
+                lineContent: errLine,
+            };
+
+            println!("{}", to_string(&err).unwrap());
+        } else {
+            let errLines = SyntaxError::getLines(line as i64, lines);
+            let logger = Logger::new(filename);
+            logger.error("SyntaxError on".to_string(), line);
+            logger.lines(errLines);
+            logger.info(reason);
+        }
+
+        process::exit(1);
     }
 }

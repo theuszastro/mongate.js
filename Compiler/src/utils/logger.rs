@@ -1,5 +1,6 @@
-use crate::errors::syntax_error::ErrorLine;
 use ansi_term::Color;
+
+use crate::errors::syntax_error::ErrorLine;
 
 pub struct Logger {
     filename: String,
@@ -13,9 +14,9 @@ impl Logger {
     pub fn lines(&self, lines: Vec<ErrorLine>) {
         for line in lines {
             let block = self.block(self.yellow(format!("Line {}", line.line)));
-            let code = self.white(line.lineContent);
+            let code = self.white(line.lineContent.replace("\n", ""));
 
-            print!("{} {}", block, code);
+            println!("{} {}", block, code);
         }
     }
 

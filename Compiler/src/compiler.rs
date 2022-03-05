@@ -1,6 +1,6 @@
 // use std::thread;
 
-use crate::errors::syntax_error::{SyntaxError, SyntaxErrorConfig};
+use crate::parser::Parser;
 use crate::tokenizer::Tokenizer;
 
 pub struct Compiler {
@@ -26,15 +26,17 @@ impl Compiler {
             json,
         } = self.config.clone();
 
-        let mut tokenizer = Tokenizer::new(filename.clone(), content.clone(), json.clone());
-        let tokens = tokenizer.run();
+        let tokenizer = Tokenizer::new(filename.clone(), content.clone(), json.clone());
+        let mut parser = Parser::new(tokenizer);
 
-        SyntaxError::new(SyntaxErrorConfig::new(
-            filename.clone(),
-            tokenizer.lines,
-            json.clone(),
-            10,
-            tokens,
-        ));
+        parser.run();
+
+        // SyntaxError::new(SyntaxErrorConfig::new(
+        //     filename.clone(),
+        //     tokenizer.lines,
+        //     json.clone(),
+        //     10,
+        //     tokens,
+        // ));
     }
 }
