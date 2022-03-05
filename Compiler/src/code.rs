@@ -13,6 +13,9 @@ impl CodeGeneration {
             Expression::Number(v) => v.clone(),
             Expression::Identifier(v) => v.clone(),
             Expression::String(data) => format!("`{}`", data),
+            Expression::RegExp(regex, args) => {
+                format!("/{}/{}", regex, args)
+            }
             Expression::Binary(l, op, r) => {
                 format!(
                     "{} {} {}",

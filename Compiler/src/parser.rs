@@ -10,7 +10,7 @@ pub enum Expression {
     Identifier(String),
     String(String),
     Boolean(String),
-    RegExp(String),
+    RegExp(String, String),
     Array(String),
     Object(String),
     ParenBinary(Box<Expression>),
@@ -107,6 +107,76 @@ impl Parser {
         match self.token.clone() {
             Some(Token::Undefined(_)) => Some(Expression::Undefined),
             Some(Token::Null(_)) => Some(Expression::Null),
+            Some(Token::Operator(op, _)) if op == "/" => {
+                let next = self.previewNext();
+                if next.is_none() || next.unwrap().tokenValue() == "/" {
+                    return None;
+                }
+
+                let allowedFlags = ["g", "i", "m", "y", "u"];
+
+                let mut regex = String::new();
+                let mut regexFlags = String::new();
+
+                self.take("Operator", false, false, false);
+
+                loop {
+                    match self.token.clone() {
+                        None => break,
+                        Some(Token::Operator(op, _)) => {
+                            if op == "/" {
+                                break;
+                            }
+
+                            regex.push_str(op.as_str());
+                        }
+                        data => {
+                            regex.push_str(data.unwrap().tokenValue().as_str());
+                        }
+                    }
+
+                    self.next(false, false, false);
+                }
+
+                let close = self.take("Operator", true, true, false);
+                if close.is_none() {
+                    self.error("Expected closing '/'".to_string());
+                }
+
+                let mut hasSpace = false;
+
+                loop {
+                    match self.token.clone() {
+                        Some(Token::Identifier(data, _)) => {
+                            let mut flags: Vec<&str> = vec![];
+                            for flag in data.split("").filter(|x| x.len() >= 1) {
+                                if !allowedFlags.contains(&flag) {
+                                    self.error(format!("Invalid flag '{}'", flag));
+                                }
+                                if flags.contains(&flag) {
+                                    self.error(format!("This flag already exists '{}'", flag));
+                                }
+                                flags.push(flag);
+                            }
+                            self.take("Identifier", true, true, true);
+
+                            regexFlags.push_str(flags.join("").as_str());
+
+                            if hasSpace {
+                                self.error(format!("Unexpected Idenfier '{}'", regexFlags));
+                            }
+                        }
+                        Some(Token::Whitespace(_)) => {
+                            self.next(true, true, true);
+
+                            hasSpace = true;
+                        }
+                        _ => break,
+                    }
+                }
+
+                Some(Expression::RegExp(regex, regexFlags))
+            }
             Some(Token::Identifier(data, _)) => {
                 if ["true", "false"].contains(&data.as_str()) {
                     return Some(Expression::Boolean(data));
