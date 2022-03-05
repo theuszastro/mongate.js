@@ -7,7 +7,6 @@ mod compiler;
 mod errors;
 mod parser;
 mod tokenizer;
-mod utils;
 mod verifier;
 
 use crate::compiler::{Compiler, CompilerConfig};
@@ -34,7 +33,6 @@ fn main() {
     let mut compiler = Compiler::new(CompilerConfig {
         content,
         filename: filename.to_string(),
-        json: false,
     });
 
     compiler.run();

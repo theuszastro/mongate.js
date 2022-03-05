@@ -3,43 +3,34 @@ use std::process;
 use serde_derive::Serialize;
 use serde_json::to_string;
 
-use crate::utils::logger::Logger;
-
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct ErrorLine {
     pub line: usize,
     pub lineContent: String,
 }
 
 #[derive(Serialize)]
-struct SyntaxErrorJson {
+pub struct SyntaxError {
     reason: String,
-    line: i64,
-    lineContent: String,
+    filename: String,
+    lineNumber: usize,
+    lineError: String,
+    lines: Vec<ErrorLine>,
 }
 
-pub struct SyntaxError {}
 pub struct SyntaxErrorConfig {
-    pub line: usize,
+    pub lineError: usize,
     pub lines: Vec<Vec<String>>,
-    pub json: bool,
     pub filename: String,
     pub reason: String,
 }
 
 impl SyntaxErrorConfig {
-    pub fn new(
-        filename: String,
-        lines: Vec<Vec<String>>,
-        json: bool,
-        line: usize,
-        reason: String,
-    ) -> Self {
+    pub fn new(filename: String, lines: Vec<Vec<String>>, line: usize, reason: String) -> Self {
         Self {
             filename,
             lines,
-            json,
-            line,
+            lineError: line,
             reason,
         }
     }
@@ -91,30 +82,21 @@ impl SyntaxError {
 
     pub fn new(config: SyntaxErrorConfig) {
         let SyntaxErrorConfig {
-            line,
             lines,
             filename,
             reason,
-            json,
+            lineError: line,
         } = config;
 
-        if json {
-            let errLine = SyntaxError::getLine(lines, line);
+        let err = SyntaxError {
+            reason,
+            lines: SyntaxError::getLines(line as i64, lines.clone()),
+            lineError: SyntaxError::getLine(lines, line - 1),
+            lineNumber: line,
+            filename,
+        };
 
-            let err = SyntaxErrorJson {
-                reason,
-                line: line as i64,
-                lineContent: errLine,
-            };
-
-            println!("{}", to_string(&err).unwrap());
-        } else {
-            let errLines = SyntaxError::getLines(line as i64, lines);
-            let logger = Logger::new(filename);
-            logger.error("SyntaxError on".to_string(), line);
-            logger.lines(errLines);
-            logger.info(reason);
-        }
+        println!("{}", to_string(&err).unwrap());
 
         process::exit(1);
     }

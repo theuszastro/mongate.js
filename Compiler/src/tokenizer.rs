@@ -67,7 +67,6 @@ impl Token {
 pub struct Tokenizer {
     pub filename: String,
     pub content: String,
-    pub json: bool,
     pub lines: Vec<Vec<String>>,
     pub line: usize,
 
@@ -204,7 +203,7 @@ impl Tokenizer {
         return _token;
     }
 
-    pub fn new(filename: String, content: String, json: bool) -> Self {
+    pub fn new(filename: String, content: String) -> Self {
         let mut lines = content
             .split("\n")
             .map(|x| x.to_string())
@@ -232,7 +231,6 @@ impl Tokenizer {
             filename,
             lines: lines.clone(),
             content,
-            json,
             cursor: 0,
             line: 1,
             letter: lines[0 as usize].iter().nth(0).unwrap().to_string(),

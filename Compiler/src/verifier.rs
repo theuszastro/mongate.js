@@ -13,8 +13,6 @@ pub struct Verifier {
 
 impl Verifier {
     fn expression(&self, value: Expression) {
-        println!("expr: {:?}", value);
-
         match value {
             _ => {}
         }

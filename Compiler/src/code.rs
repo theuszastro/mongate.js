@@ -21,7 +21,7 @@ impl CodeGeneration {
                 )
             }
             Expression::ParenBinary(ex) => {
-                format!("({})", self.expression(*ex),)
+                format!("({})", self.expression(*ex))
             }
             _ => "".to_string(),
         }

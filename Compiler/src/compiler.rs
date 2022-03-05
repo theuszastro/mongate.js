@@ -11,7 +11,6 @@ pub struct Compiler {
 pub struct CompilerConfig {
     pub filename: String,
     pub content: String,
-    pub json: bool,
 }
 
 impl Compiler {
@@ -20,23 +19,11 @@ impl Compiler {
     }
 
     pub fn run(&mut self) {
-        let CompilerConfig {
-            filename,
-            content,
-            json,
-        } = self.config.clone();
+        let CompilerConfig { filename, content } = self.config.clone();
 
-        let tokenizer = Tokenizer::new(filename.clone(), content.clone(), json.clone());
+        let tokenizer = Tokenizer::new(filename.clone(), content.clone());
         let mut parser = Parser::new(tokenizer);
 
         parser.run();
-
-        // SyntaxError::new(SyntaxErrorConfig::new(
-        //     filename.clone(),
-        //     tokenizer.lines,
-        //     json.clone(),
-        //     10,
-        //     tokens,
-        // ));
     }
 }

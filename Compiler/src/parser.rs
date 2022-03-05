@@ -95,7 +95,6 @@ impl Parser {
         SyntaxError::new(SyntaxErrorConfig::new(
             self.tokenizer.filename.clone(),
             self.tokenizer.lines.clone(),
-            self.tokenizer.json,
             self.tokenizer.line,
             reason,
         ));
