@@ -121,6 +121,17 @@ impl Tokenizer {
         }
     }
 
+    pub fn previewNextToken(&mut self) -> Option<Token> {
+        let oldSelf = self.clone();
+        let nextToken = self.getToken();
+
+        self.line = oldSelf.line;
+        self.cursor = oldSelf.cursor;
+        self.letter = oldSelf.letter;
+
+        return nextToken;
+    }
+
     pub fn next(&mut self) {
         self.cursor += 1;
 

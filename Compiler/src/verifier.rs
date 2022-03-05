@@ -1,6 +1,5 @@
 use crate::code::CodeGeneration;
-use crate::errors::syntax_error::SyntaxError;
-use crate::errors::syntax_error::SyntaxErrorConfig;
+use crate::parser::Expression;
 use crate::parser::{BodyToken, ParsedToken};
 use crate::tokenizer::Token;
 
@@ -13,21 +12,17 @@ pub struct Verifier {
 }
 
 impl Verifier {
-    pub fn new(filename: String) -> Self {
-        Self {
-            filename,
-            generation: CodeGeneration::new(),
-            names: vec![],
-        }
-    }
+    fn expression(&self, value: Expression) {
+        println!("expr: {:?}", value);
 
-    pub fn end(&mut self) {
-        self.generation.generateToFile(self.filename.clone());
+        match value {
+            _ => {}
+        }
     }
 
     pub fn verify(&mut self, token: ParsedToken) {
         match token.clone() {
-            ParsedToken::Expr(expr) => {}
+            ParsedToken::Expr(expr) => self.expression(expr),
             ParsedToken::Body(body) => match body {
                 BodyToken::VariableDeclaration(tokenName, expr)
                 | BodyToken::ConstantDeclaration(tokenName, expr) => {
@@ -42,12 +37,24 @@ impl Verifier {
 
                         self.names.push(name);
                     }
-                }
 
-                _ => {}
+                    self.expression(expr);
+                }
             },
         }
 
         self.generation.generate(token);
+    }
+
+    pub fn end(&mut self) {
+        self.generation.generateToFile(self.filename.clone());
+    }
+
+    pub fn new(filename: String) -> Self {
+        Self {
+            filename,
+            generation: CodeGeneration::new(),
+            names: vec![],
+        }
     }
 }

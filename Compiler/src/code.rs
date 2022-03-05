@@ -11,7 +11,19 @@ impl CodeGeneration {
             Expression::Undefined => "undefined".to_string(),
             Expression::Null => "null".to_string(),
             Expression::Number(v) => v.clone(),
-            _ => panic!(""),
+            Expression::Identifier(v) => v.clone(),
+            Expression::Binary(l, op, r) => {
+                format!(
+                    "{} {} {}",
+                    self.expression(*l),
+                    op.tokenValue(),
+                    self.expression(*r)
+                )
+            }
+            Expression::ParenBinary(ex) => {
+                format!("({})", self.expression(*ex),)
+            }
+            _ => "".to_string(),
         }
     }
 
@@ -32,7 +44,11 @@ impl CodeGeneration {
 
     pub fn generate(&mut self, token: ParsedToken) {
         match token {
-            ParsedToken::Expr(expr) => {}
+            ParsedToken::Expr(expr) => {
+                let code = format!("{}\n", self.expression(expr));
+
+                self.code.push_str(code.as_str());
+            }
             ParsedToken::Body(body) => match body {
                 BodyToken::VariableDeclaration(token, expr) => {
                     self.variableOrConstant("let".to_string(), token.tokenValue(), expr);

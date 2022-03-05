@@ -13,6 +13,8 @@ pub enum Expression {
     RegExp(String),
     Array(String),
     Object(String),
+    ParenBinary(Box<Expression>),
+    Binary(Box<Expression>, Token, Box<Expression>),
     Null,
     Undefined,
 }
@@ -33,6 +35,8 @@ pub enum ParsedToken {
 pub struct Parser {
     tokenizer: Tokenizer,
     verifier: Verifier,
+
+    token: Option<Token>,
 }
 
 impl Parser {
@@ -42,9 +46,7 @@ impl Parser {
         skipSemicolon: bool,
         skipWhitespace: bool,
     ) -> Option<Token> {
-        let token = self.tokenizer.getToken();
-
-        match token {
+        match self.tokenizer.getToken() {
             Some(Token::EOF) => None,
             None => None,
             Some(Token::Newline(_)) if skipNewline => {
@@ -53,12 +55,40 @@ impl Parser {
             Some(Token::Whitespace(_)) if skipWhitespace => {
                 return self.next(skipNewline, skipSemicolon, skipWhitespace)
             }
-            Some(Token::Brackets(data, _)) if data == ";" && skipNewline => {
+            Some(Token::Punctuation(data, _)) if data == ";" && skipNewline => {
                 return self.next(skipNewline, skipSemicolon, skipWhitespace)
             }
             Some(Token::Identifier(data, _)) if data.len() <= 0 => None,
-            _ => token,
+            data => {
+                self.token = data.clone();
+
+                return data;
+            }
         }
+    }
+
+    fn previewNext(&mut self) -> Option<Token> {
+        let token = self.tokenizer.previewNextToken();
+
+        return token;
+    }
+
+    fn take(
+        &mut self,
+        r#type: &str,
+        skipNewline: bool,
+        skipSemicolon: bool,
+        skipWhitespace: bool,
+    ) -> Option<Token> {
+        if let Some(token) = self.token.clone() {
+            if token.tokenType() == r#type.to_string() {
+                self.token = self.next(skipNewline, skipSemicolon, skipWhitespace);
+
+                return Some(token);
+            }
+        }
+
+        None
     }
 
     fn error(&self, reason: String) {
@@ -72,7 +102,7 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Option<Expression> {
-        match self.next(true, true, true) {
+        let expr = match self.token.clone() {
             Some(Token::Undefined(_)) => Some(Expression::Undefined),
             Some(Token::Null(_)) => Some(Expression::Null),
             Some(Token::Identifier(data, _)) => {
@@ -82,20 +112,57 @@ impl Parser {
 
                 Some(Expression::Identifier(data))
             }
+            Some(Token::Brackets(bra, _)) if bra == "(" => {
+                self.take("Brackets", true, true, true);
+
+                let expr = self.expression();
+                if let Some(expr) = expr {
+                    let close = self.take("Brackets", true, true, true);
+                    if close.is_none() {
+                        self.error("Expected ')'".to_string());
+                    }
+
+                    return Some(Expression::ParenBinary(Box::new(expr)));
+                }
+
+                None
+            }
             Some(Token::Number(data, _)) => {
                 let mut number = data.clone();
+                let allowedTypes = ["Number", "Identifier"];
 
-                loop {
-                    match self.next(true, true, true) {
-                        Some(Token::Identifier(data, _)) => {
-                            if data != "e" {
-                                self.error(format!("Unexpected '{}'", data));
+                let next = self.previewNext();
+
+                self.take("Number", true, true, true);
+
+                if next.is_some() && allowedTypes.contains(&next.unwrap().tokenType().as_str()) {
+                    if let Some(token) = self.token.clone() {
+                        if allowedTypes.contains(&token.tokenType().as_str()) {
+                            loop {
+                                match self.token.clone() {
+                                    Some(Token::Identifier(data, _)) => {
+                                        if data != "e" {
+                                            self.error(format!("Unexpected '{}'", data));
+                                        }
+                                        number.push_str(&data)
+                                    }
+                                    Some(Token::Number(data, _)) => number.push_str(&data),
+                                    _ => break,
+                                };
+                                let next = self.previewNext();
+                                self.take(
+                                    self.token.clone().unwrap().tokenType().as_str(),
+                                    true,
+                                    true,
+                                    true,
+                                );
+                                if next.is_none()
+                                    || !allowedTypes.contains(&next.unwrap().tokenType().as_str())
+                                {
+                                    break;
+                                }
                             }
-
-                            number.push_str(&data)
                         }
-                        Some(Token::Number(data, _)) => number.push_str(&data),
-                        _ => break,
                     }
                 }
 
@@ -107,36 +174,65 @@ impl Parser {
                     number.pop();
                 }
 
+                let preview = self.previewNext();
+                if preview.is_some() && preview.unwrap().tokenValue() == "/" {
+                    if self.token.clone().unwrap().tokenValue() == "/" {
+                        return Some(Expression::Number(number));
+                    }
+                }
+
+                let op = self.take("Operator", true, true, true);
+                if op.is_some() {
+                    let right = self.expression();
+                    if right.is_none() {
+                        self.error("Expected a right value".to_string());
+                    }
+
+                    return Some(Expression::Binary(
+                        Box::new(Expression::Number(number)),
+                        op.unwrap(),
+                        Box::new(right.unwrap()),
+                    ));
+                }
+
                 Some(Expression::Number(number))
             }
             _ => None,
-        }
+        };
+
+        expr
     }
 
     pub fn run(&mut self) {
         let mut parsedToken: Option<ParsedToken> = None;
 
-        loop {
-            let token = self.next(true, true, true);
+        if self.token.is_none() {
+            self.token = self.next(true, true, true);
+        }
 
+        loop {
             if let Some(parsed) = parsedToken.clone() {
                 self.verifier.verify(parsed);
 
                 parsedToken = None;
             }
 
-            match token {
+            match self.token.clone() {
                 None => break,
                 Some(Token::Keyword(data, _)) => match data.as_str() {
                     "let" | "const" => {
-                        let name = self.next(true, true, true);
-                        if name.is_none() || name.clone().unwrap().tokenType() != "Identifier" {
+                        self.take("Keyword", true, true, true);
+
+                        let name = self.take("Identifier", true, true, true);
+                        if name.is_none() {
                             self.error("Expected a Identifier".to_string());
                         }
 
-                        let assign = self.next(true, true, true);
-                        if assign.is_none() || assign.unwrap().tokenValue() != "=" {
+                        let assign = self.take("Punctuation", true, true, true);
+                        if assign.is_none() || assign.clone().unwrap().tokenValue() != "=" {
                             if data == "const" {
+                                println!("{:?}", assign);
+
                                 self.error("Expected a '='".to_string());
                             }
 
@@ -168,7 +264,23 @@ impl Parser {
                     }
                     _ => {}
                 },
-                _ => {}
+                _ => {
+                    let expression = self.expression();
+
+                    if let Some(expr) = expression {
+                        match expr.clone() {
+                            Expression::Number(_) => {}
+                            _ => {
+                                parsedToken = Some(ParsedToken::Expr(expr));
+                            }
+                        }
+                    } else {
+                        self.error(format!(
+                            "Unexpected '{}'",
+                            self.token.clone().unwrap().tokenValue()
+                        ));
+                    }
+                }
             }
         }
 
@@ -178,6 +290,7 @@ impl Parser {
     pub fn new(tokenizer: Tokenizer) -> Self {
         Self {
             verifier: Verifier::new(tokenizer.filename.clone()),
+            token: None,
             tokenizer,
         }
     }
