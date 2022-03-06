@@ -193,6 +193,18 @@ impl Parser {
                             _ => {
                                 let expr = self.expression();
                                 if expr.is_none() {
+                                    match self.token.clone() {
+                                        Some(Token::Brackets(bra, _)) if bra == "]" => break,
+                                        Some(Token::Punctuation(pun, _)) if pun == "," => {
+                                            self.take("Punctuation", true, true, true);
+
+                                            values.push(Expression::Undefined);
+
+                                            continue;
+                                        }
+                                        _ => {}
+                                    }
+
                                     break;
                                 }
 

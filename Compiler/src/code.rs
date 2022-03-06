@@ -21,13 +21,14 @@ impl CodeGeneration {
                     values
                         .iter()
                         .map(|(key, value)| {
-                            format!("[`{}`]: {}", key, self.expression(value.clone()))
+                            format!("'{}': {}", key, self.expression(value.clone()))
                         })
                         .collect::<Vec<String>>()
                         .join(", ")
                         .as_str(),
                 );
 
+                code = code.trim_end().to_string();
                 code.push_str(" }");
 
                 code
