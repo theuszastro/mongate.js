@@ -15,6 +15,23 @@ impl CodeGeneration {
             Expression::String(data) => format!("`{}`", data),
             Expression::Boolean(v) => v.to_string(),
             Expression::RegExp(regex, args) => format!("/{}/{}", regex, args),
+            Expression::Object(values) => {
+                let mut code = String::from("{ ");
+                code.push_str(
+                    values
+                        .iter()
+                        .map(|(key, value)| {
+                            format!("[`{}`]: {}", key, self.expression(value.clone()))
+                        })
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                        .as_str(),
+                );
+
+                code.push_str(" }");
+
+                code
+            }
             Expression::Array(v) => {
                 let mut result = "[".to_string();
                 for (i, item) in v.iter().enumerate() {
@@ -39,7 +56,6 @@ impl CodeGeneration {
             Expression::ParenBinary(ex) => {
                 format!("({})", self.expression(*ex))
             }
-            _ => "".to_string(),
         }
     }
 

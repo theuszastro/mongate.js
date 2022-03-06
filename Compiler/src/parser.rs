@@ -12,7 +12,7 @@ pub enum Expression {
     Boolean(String),
     RegExp(String, String),
     Array(Vec<Expression>),
-    Object(String),
+    Object(Vec<(String, Expression)>),
     ParenBinary(Box<Expression>),
     Binary(Box<Expression>, Token, Box<Expression>),
     Null,
@@ -239,6 +239,74 @@ impl Parser {
                     }
                     None
                 }
+                "{" => {
+                    self.take("Brackets", true, true, true);
+
+                    let mut values: Vec<(String, Expression)> = vec![];
+
+                    loop {
+                        match self.token.clone() {
+                            Some(Token::Brackets(bra, _)) if bra == "}" => break,
+                            _ => {
+                                let mut key = String::new();
+
+                                let identifer = self.take("Identifier", true, true, true);
+                                if identifer.is_none() {
+                                    let keyString = self.expression();
+                                    if keyString.is_none() {
+                                        self.error("Expected Identifier".to_string());
+                                    }
+
+                                    if let Some(Expression::String(value)) = keyString {
+                                        key = value;
+                                    } else {
+                                        self.error("Expected 'String'".to_string());
+                                    }
+                                } else {
+                                    key = identifer.unwrap().tokenValue();
+                                }
+
+                                let colon = self.take("Punctuation", true, true, true);
+                                if colon.is_none() || colon.unwrap().tokenValue() != ":" {
+                                    self.error("Expected ':'".to_string());
+                                }
+
+                                let value = self.expression();
+                                if value.is_none() {
+                                    self.error("Expected Expression".to_string());
+                                }
+
+                                values.push((key, value.unwrap()));
+
+                                match self.token.clone() {
+                                    Some(Token::Punctuation(pun, _)) => {
+                                        if pun == "," {
+                                            self.next(true, true, true);
+
+                                            continue;
+                                        }
+
+                                        break;
+                                    }
+                                    _ => {
+                                        let expr = self.expression();
+
+                                        if expr.is_some() {
+                                            self.error("Expected ','".to_string());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    let close = self.take("Brackets", true, true, true);
+                    if close.is_none() || close.unwrap().tokenValue() != "}" {
+                        self.error("Expected '}'".to_string());
+                    }
+
+                    Some(Expression::Object(values))
+                }
                 _ => None,
             },
             Some(Token::Identifier(data, _)) => {
@@ -250,48 +318,42 @@ impl Parser {
 
                 Some(Expression::Identifier(data))
             }
-            Some(Token::Symbol(sym, _)) => {
-                if ["'", "\""].contains(&sym.as_str()) {
-                    self.take("Symbol", false, false, false);
+            Some(Token::Symbol(sym, _)) if ["'", "\""].contains(&sym.as_str()) => {
+                self.take("Symbol", false, false, false);
 
-                    let mut string = String::new();
+                let mut string = String::new();
 
-                    loop {
-                        match self.token.clone() {
-                            Some(Token::Symbol(symbol, _)) => {
-                                if ["'", "\""].contains(&symbol.as_str()) {
-                                    if string.ends_with("\\") {
-                                        println!("ii0audwa");
+                loop {
+                    match self.token.clone() {
+                        Some(Token::Symbol(symbol, _))
+                            if ["'", "\""].contains(&symbol.as_str()) =>
+                        {
+                            if string.ends_with("\\") {
+                                string.push_str(symbol.as_str());
 
-                                        string.push_str(symbol.as_str());
+                                self.take("Symbol", false, false, false);
 
-                                        self.take("Symbol", false, false, false);
-
-                                        continue;
-                                    }
-
-                                    break;
-                                }
+                                continue;
                             }
-                            Some(Token::Newline(_)) => break,
-                            Some(data) => {
-                                string.push_str(data.tokenValue().as_str());
 
-                                self.next(false, false, false);
-                            }
-                            None => break,
+                            break;
                         }
-                    }
+                        Some(Token::Newline(_)) => break,
+                        Some(data) => {
+                            string.push_str(data.tokenValue().as_str());
 
-                    let close = self.take("Symbol", true, true, true);
-                    if close.is_none() || close.clone().unwrap().tokenValue() != sym {
-                        self.error(format!("Expected '{}'", sym));
+                            self.next(false, false, false);
+                        }
+                        None => break,
                     }
-
-                    return Some(Expression::String(string));
                 }
 
-                None
+                let close = self.take("Symbol", true, true, true);
+                if close.is_none() || close.clone().unwrap().tokenValue() != sym {
+                    self.error(format!("Expected '{}'", sym));
+                }
+
+                Some(Expression::String(string))
             }
             Some(Token::Number(data, _)) => {
                 let mut number = data.clone();
