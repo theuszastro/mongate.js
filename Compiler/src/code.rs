@@ -13,8 +13,20 @@ impl CodeGeneration {
             Expression::Number(v) => v.clone(),
             Expression::Identifier(v) => v.clone(),
             Expression::String(data) => format!("`{}`", data),
-            Expression::RegExp(regex, args) => {
-                format!("/{}/{}", regex, args)
+            Expression::Boolean(v) => v.to_string(),
+            Expression::RegExp(regex, args) => format!("/{}/{}", regex, args),
+            Expression::Array(v) => {
+                let mut result = "[".to_string();
+                for (i, item) in v.iter().enumerate() {
+                    if i > 0 {
+                        result.push_str(", ");
+                    }
+
+                    result.push_str(&self.expression(item.clone()));
+                }
+                result.push_str("]");
+
+                result
             }
             Expression::Binary(l, op, r) => {
                 format!(
@@ -57,12 +69,9 @@ impl CodeGeneration {
                 BodyToken::VariableDeclaration(token, expr) => {
                     self.variableOrConstant("let".to_string(), token.tokenValue(), expr);
                 }
-
                 BodyToken::ConstantDeclaration(token, expr) => {
-                    self.variableOrConstant("let".to_string(), token.tokenValue(), expr);
+                    self.variableOrConstant("const".to_string(), token.tokenValue(), expr);
                 }
-
-                _ => {}
             },
         }
     }

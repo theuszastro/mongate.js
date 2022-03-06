@@ -87,7 +87,7 @@ impl Tokenizer {
     }
 
     fn isLetter(&self) -> bool {
-        let regex = Regex::new("[a-zA-Z]").unwrap();
+        let regex = Regex::new("[a-zA-Z0-9]").unwrap();
         let letter = self.letter.as_str();
 
         match letter {
@@ -155,8 +155,6 @@ impl Tokenizer {
             "(" | ")" | "[" | "]" | "{" | "}" => _token = Some(Token::Brackets(letter, context)),
             "+" | "-" | "/" | "*" | "%" => _token = Some(Token::Operator(letter, context)),
             "&" | "|" => _token = Some(Token::LogicalOperator(letter, context)),
-            "null" => _token = Some(Token::Null(context)),
-            "undefined" => _token = Some(Token::Undefined(context)),
             "@" | "$" | "^" | "\\" | "#" | "'" | "\"" => {
                 _token = Some(Token::Symbol(letter, context))
             }
@@ -196,7 +194,13 @@ impl Tokenizer {
                     return Some(Token::Keyword(word, self.context()));
                 }
 
-                return Some(Token::Identifier(word, self.context()));
+                match word.clone().as_str() {
+                    "null" => _token = Some(Token::Null(context)),
+                    "undefined" => _token = Some(Token::Undefined(context)),
+                    _ => _token = Some(Token::Identifier(word, self.context())),
+                }
+
+                return _token;
             }
         }
 

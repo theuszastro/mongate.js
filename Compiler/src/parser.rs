@@ -11,7 +11,7 @@ pub enum Expression {
     String(String),
     Boolean(String),
     RegExp(String, String),
-    Array(String),
+    Array(Vec<Expression>),
     Object(String),
     ParenBinary(Box<Expression>),
     Binary(Box<Expression>, Token, Box<Expression>),
@@ -85,7 +85,7 @@ impl Parser {
     ) -> Option<Token> {
         if let Some(token) = self.token.clone() {
             if token.tokenType() == r#type.to_string() {
-                self.token = self.next(skipNewline, skipSemicolon, skipWhitespace);
+                self.next(skipNewline, skipSemicolon, skipWhitespace);
 
                 return Some(token);
             }
@@ -105,8 +105,16 @@ impl Parser {
 
     fn expression(&mut self) -> Option<Expression> {
         match self.token.clone() {
-            Some(Token::Undefined(_)) => Some(Expression::Undefined),
-            Some(Token::Null(_)) => Some(Expression::Null),
+            Some(Token::Undefined(_)) => {
+                self.take("Undefined", true, true, true);
+
+                Some(Expression::Undefined)
+            }
+            Some(Token::Null(_)) => {
+                self.take("Null", true, true, true);
+
+                Some(Expression::Null)
+            }
             Some(Token::Operator(op, _)) if op == "/" => {
                 let next = self.previewNext();
                 if next.is_none() || next.unwrap().tokenValue() == "/" {
@@ -143,95 +151,144 @@ impl Parser {
                     self.error("Expected closing '/'".to_string());
                 }
 
-                let mut hasSpace = false;
+                match self.token.clone() {
+                    Some(Token::Identifier(data, _)) => {
+                        let mut flags: Vec<&str> = vec![];
 
-                loop {
-                    match self.token.clone() {
-                        Some(Token::Identifier(data, _)) => {
-                            let mut flags: Vec<&str> = vec![];
-                            for flag in data.split("").filter(|x| x.len() >= 1) {
-                                if !allowedFlags.contains(&flag) {
-                                    self.error(format!("Invalid flag '{}'", flag));
-                                }
-                                if flags.contains(&flag) {
-                                    self.error(format!("This flag already exists '{}'", flag));
-                                }
-                                flags.push(flag);
+                        for flag in data.split("").filter(|x| x.len() >= 1) {
+                            if !allowedFlags.contains(&flag) {
+                                self.error(format!("Invalid flag '{}'", flag));
                             }
-                            self.take("Identifier", true, true, true);
-
-                            regexFlags.push_str(flags.join("").as_str());
-
-                            if hasSpace {
-                                self.error(format!("Unexpected Idenfier '{}'", regexFlags));
+                            if flags.contains(&flag) {
+                                self.error(format!("This flag already exists '{}'", flag));
                             }
+                            flags.push(flag);
                         }
-                        Some(Token::Whitespace(_)) => {
-                            self.next(true, true, true);
 
-                            hasSpace = true;
-                        }
-                        _ => break,
+                        self.take("Identifier", true, true, true);
+
+                        regexFlags.push_str(flags.join("").as_str());
                     }
+                    Some(Token::Whitespace(_)) => {
+                        self.next(true, true, true);
+
+                        if let Some(Token::Identifier(data, _)) = self.token.clone() {
+                            self.error(format!("Unexpected Idenfier '{}'", data));
+                        }
+                    }
+                    _ => {}
                 }
 
                 Some(Expression::RegExp(regex, regexFlags))
             }
+            Some(Token::Brackets(bra, _)) => match bra.as_str() {
+                "[" => {
+                    self.take("Brackets", true, true, true);
+
+                    let mut values: Vec<Expression> = vec![];
+
+                    loop {
+                        match self.token.clone() {
+                            Some(Token::Brackets(bra, _)) if bra == "[" => break,
+                            _ => {
+                                let expr = self.expression();
+                                if expr.is_none() {
+                                    break;
+                                }
+
+                                values.push(expr.clone().unwrap());
+
+                                match self.token.clone() {
+                                    Some(Token::Punctuation(pun, _)) => {
+                                        if pun == "," {
+                                            self.next(true, true, true);
+
+                                            continue;
+                                        }
+
+                                        break;
+                                    }
+                                    _ => {
+                                        let expr = self.expression();
+
+                                        if expr.is_some() {
+                                            self.error("Expected ','".to_string());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    let close = self.take("Brackets", true, true, true);
+                    if close.is_none() || close.unwrap().tokenValue() != "]" {
+                        self.error("Expected ']'".to_string());
+                    }
+
+                    Some(Expression::Array(values))
+                }
+                "(" => {
+                    self.take("Brackets", true, true, true);
+                    let expr = self.expression();
+                    if let Some(expr) = expr {
+                        let close = self.take("Brackets", true, true, true);
+                        if close.is_none() {
+                            self.error("Expected ')'".to_string());
+                        }
+                        return Some(Expression::ParenBinary(Box::new(expr)));
+                    }
+                    None
+                }
+                _ => None,
+            },
             Some(Token::Identifier(data, _)) => {
                 if ["true", "false"].contains(&data.as_str()) {
+                    self.take("Identifier", true, true, true);
+
                     return Some(Expression::Boolean(data));
                 }
 
                 Some(Expression::Identifier(data))
             }
-            Some(Token::Symbol(sym, _)) if ["'", "\""].contains(&sym.as_str()) => {
-                let delimiter = sym.clone();
+            Some(Token::Symbol(sym, _)) => {
+                if ["'", "\""].contains(&sym.as_str()) {
+                    self.take("Symbol", false, false, false);
 
-                self.take("Symbol", false, false, false);
+                    let mut string = String::new();
 
-                let mut string = String::new();
+                    loop {
+                        match self.token.clone() {
+                            Some(Token::Symbol(symbol, _)) => {
+                                if ["'", "\""].contains(&symbol.as_str()) {
+                                    if string.ends_with("\\") {
+                                        println!("ii0audwa");
 
-                loop {
-                    match self.token.clone() {
-                        Some(Token::Newline(_)) => break,
-                        Some(Token::Symbol(sym, _)) if ["'", "\""].contains(&sym.as_str()) => {
-                            if string.ends_with("\\") {
-                                string.push_str(sym.as_str());
+                                        string.push_str(symbol.as_str());
+
+                                        self.take("Symbol", false, false, false);
+
+                                        continue;
+                                    }
+
+                                    break;
+                                }
+                            }
+                            Some(Token::Newline(_)) => break,
+                            Some(data) => {
+                                string.push_str(data.tokenValue().as_str());
 
                                 self.next(false, false, false);
-
-                                continue;
                             }
-
-                            break;
+                            None => break,
                         }
-                        Some(data) => {
-                            string.push_str(data.tokenValue().as_str());
-
-                            self.next(false, false, false);
-                        }
-                        None => break,
-                    }
-                }
-
-                let close = self.take("Symbol", true, true, true);
-                if close.is_none() || close.unwrap().tokenValue() != delimiter {
-                    self.error(format!("Expected '{}'", delimiter));
-                }
-
-                Some(Expression::String(string))
-            }
-            Some(Token::Brackets(bra, _)) if bra == "(" => {
-                self.take("Brackets", true, true, true);
-
-                let expr = self.expression();
-                if let Some(expr) = expr {
-                    let close = self.take("Brackets", true, true, true);
-                    if close.is_none() {
-                        self.error("Expected ')'".to_string());
                     }
 
-                    return Some(Expression::ParenBinary(Box::new(expr)));
+                    let close = self.take("Symbol", true, true, true);
+                    if close.is_none() || close.clone().unwrap().tokenValue() != sym {
+                        self.error(format!("Expected '{}'", sym));
+                    }
+
+                    return Some(Expression::String(string));
                 }
 
                 None
@@ -250,10 +307,13 @@ impl Parser {
                             loop {
                                 match self.token.clone() {
                                     Some(Token::Identifier(data, _)) => {
-                                        if data != "e" {
-                                            self.error(format!("Unexpected '{}'", data));
+                                        for letter in data.split("").filter(|x| x.len() >= 1) {
+                                            match letter {
+                                                "e" | "0" | "1" | "2" | "3" | "4" | "5" | "6"
+                                                | "7" | "8" | "9" => number.push_str(&letter),
+                                                _ => self.error(format!("Unexpected '{}'", letter)),
+                                            }
                                         }
-                                        number.push_str(&data)
                                     }
                                     Some(Token::Number(data, _)) => number.push_str(&data),
                                     _ => break,
@@ -314,7 +374,7 @@ impl Parser {
         let mut parsedToken: Option<ParsedToken> = None;
 
         if self.token.is_none() {
-            self.token = self.next(true, true, true);
+            self.next(true, true, true);
         }
 
         loop {
@@ -375,17 +435,14 @@ impl Parser {
                     let expression = self.expression();
 
                     if let Some(expr) = expression {
-                        match expr.clone() {
-                            Expression::Number(_) => {}
-                            _ => {
-                                parsedToken = Some(ParsedToken::Expr(expr));
-                            }
-                        }
+                        parsedToken = Some(ParsedToken::Expr(expr));
                     } else {
-                        self.error(format!(
-                            "Unexpected '{}'",
-                            self.token.clone().unwrap().tokenValue()
-                        ));
+                        if self.token.is_some() {
+                            self.error(format!(
+                                "Unexpected '{}'",
+                                self.token.clone().unwrap().tokenValue()
+                            ));
+                        }
                     }
                 }
             }
