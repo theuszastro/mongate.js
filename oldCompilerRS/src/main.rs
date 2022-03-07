@@ -2,11 +2,12 @@
 
 use std::fs;
 
+mod code;
 mod compiler;
 mod errors;
-mod parsers;
+mod parser;
 mod tokenizer;
-mod utils;
+mod verifier;
 
 use crate::compiler::{Compiler, CompilerConfig};
 

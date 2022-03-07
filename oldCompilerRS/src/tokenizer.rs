@@ -120,36 +120,15 @@ impl Tokenizer {
         }
     }
 
-    pub fn previewNextToken(
-        &mut self,
-        skipNewline: bool,
-        skipSemicolon: bool,
-        skipWhitespace: bool,
-    ) -> Option<Token> {
+    pub fn previewNextToken(&mut self) -> Option<Token> {
         let oldSelf = self.clone();
-
-        let mut token = self.getToken();
-
-        loop {
-            match token {
-                Some(Token::Whitespace(_)) if skipWhitespace => {
-                    token = self.getToken();
-                }
-                Some(Token::Newline(_)) if skipNewline => {
-                    token = self.getToken();
-                }
-                Some(Token::Punctuation(punc, _)) if punc == ";" && skipSemicolon => {
-                    token = self.getToken();
-                }
-                _ => break,
-            }
-        }
+        let nextToken = self.getToken();
 
         self.line = oldSelf.line;
         self.cursor = oldSelf.cursor;
         self.letter = oldSelf.letter;
 
-        return token;
+        return nextToken;
     }
 
     pub fn next(&mut self) {
@@ -261,10 +240,13 @@ impl Tokenizer {
             cursor: 0,
             line: 1,
             letter: lines[0 as usize].iter().nth(0).unwrap().to_string(),
-            keywords: Vec::from(["let", "const", "return", "def", "end"])
-                .iter()
-                .map(|data| data.to_string())
-                .collect(),
+            keywords: Vec::from([
+                "let", "const", "if", "else", "loop", "for", "class", "extends", "return", "break",
+                "continue", "require", "export",
+            ])
+            .iter()
+            .map(|data| data.to_string())
+            .collect(),
         }
     }
 }

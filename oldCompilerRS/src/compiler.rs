@@ -1,6 +1,6 @@
 // use std::thread;
 
-use crate::parsers::Parser;
+use crate::parser::Parser;
 use crate::tokenizer::Tokenizer;
 
 pub struct Compiler {
