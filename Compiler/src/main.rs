@@ -4,6 +4,7 @@ use std::fs;
 
 mod compiler;
 mod errors;
+mod generation;
 mod parsers;
 mod tokenizer;
 mod utils;

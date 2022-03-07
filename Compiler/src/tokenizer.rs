@@ -126,7 +126,9 @@ impl Tokenizer {
         skipSemicolon: bool,
         skipWhitespace: bool,
     ) -> Option<Token> {
-        let oldSelf = self.clone();
+        let line = self.line;
+        let letter = self.letter.clone();
+        let cursor = self.cursor;
 
         let mut token = self.getToken();
 
@@ -145,9 +147,9 @@ impl Tokenizer {
             }
         }
 
-        self.line = oldSelf.line;
-        self.cursor = oldSelf.cursor;
-        self.letter = oldSelf.letter;
+        self.line = line;
+        self.cursor = cursor;
+        self.letter = letter;
 
         return token;
     }

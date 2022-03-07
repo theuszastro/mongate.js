@@ -16,12 +16,14 @@ impl Pointer {
     }
 
     pub fn error(&mut self, reason: String) {
-        SyntaxError::new(
-            self.tokenizer.filename.clone(),
-            self.tokenizer.lines.clone(),
-            self.tokenizer.line,
-            reason,
-        );
+        let Tokenizer {
+            filename,
+            lines,
+            line,
+            ..
+        } = &self.tokenizer;
+
+        SyntaxError::new(filename.clone(), lines.clone(), *line, reason);
     }
 
     pub fn previewNext(

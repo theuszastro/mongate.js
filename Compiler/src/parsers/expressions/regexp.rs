@@ -43,19 +43,21 @@ pub fn regexp(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
 
     match pointer.token.clone() {
         Some(Token::Identifier(data, _)) => {
+            pointer.take("Identifier", true, true, true);
+
             let mut flags: Vec<&str> = vec![];
 
             for flag in data.split("").filter(|x| x.len() >= 1) {
                 if !allowedFlags.contains(&flag) {
                     pointer.error(format!("Invalid flag '{}'", flag));
                 }
+
                 if flags.contains(&flag) {
                     pointer.error(format!("This flag already exists '{}'", flag));
                 }
+
                 flags.push(flag);
             }
-
-            pointer.take("Identifier", true, true, true);
 
             regexFlags.push_str(flags.join("").as_str());
         }

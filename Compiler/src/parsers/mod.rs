@@ -1,14 +1,17 @@
 use std::mem::ManuallyDrop;
 
+use crate::generation::CodeGeneration;
 use crate::tokenizer::{Token, Tokenizer};
 use crate::utils::pointer::Pointer;
 
-mod expression;
+mod expressions;
+mod statements;
 
-use expression::{expression, Expression};
+use expressions::expression;
+pub use expressions::Expression;
 
 #[derive(Debug, Clone)]
-pub enum BodyToken {
+pub enum StatementToken {
     VariableDeclaration(Token, Expression),
     ConstantDeclaration(Token, Expression),
 }
@@ -16,12 +19,13 @@ pub enum BodyToken {
 #[derive(Debug, Clone)]
 pub enum ParsedToken {
     Expr(Expression),
-    Body(BodyToken),
+    Statement(StatementToken),
 }
 
 #[derive(Debug)]
 pub struct Parser {
     pointer: Pointer,
+    generation: CodeGeneration,
 }
 
 impl Parser {
@@ -32,16 +36,23 @@ impl Parser {
             pointer.next(true, true, true);
         }
 
-        let mut body: Vec<ParsedToken> = vec![];
-
         loop {
             match pointer.token.clone() {
                 None | Some(Token::EOF) => break,
-                Some(Token::Keyword(keyword, _)) => continue,
+                Some(Token::Keyword(keyword, _)) => {
+                    let stmt = statements::statements(&mut pointer, keyword);
+
+                    if let Some(statement) = stmt {
+                        println!("{:?}", statement);
+
+                        self.generation.generate(ParsedToken::Statement(statement));
+                    }
+                }
                 _ => {
                     let expr = expression(&mut pointer);
                     if let Some(expression) = expr {
-                        body.push(ParsedToken::Expr(expression));
+                        self.generation
+                            .generate(ParsedToken::Expr(expression.clone()));
 
                         continue;
                     }
@@ -53,16 +64,7 @@ impl Parser {
             }
         }
 
-        for token in body {
-            match token {
-                ParsedToken::Expr(expr) => {
-                    println!("{:?}", expr);
-                }
-                ParsedToken::Body(bodyToken) => {
-                    println!("{:?}", bodyToken);
-                }
-            }
-        }
+        println!("{}", self.generation.code);
 
         drop(pointer);
     }
@@ -70,6 +72,7 @@ impl Parser {
     pub fn new(tokenizer: Tokenizer) -> Self {
         Self {
             pointer: Pointer::new(tokenizer),
+            generation: CodeGeneration::new(),
         }
     }
 }

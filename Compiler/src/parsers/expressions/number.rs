@@ -58,7 +58,7 @@ pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Ex
 
     if let Some(data) = next {
         if data.tokenValue() == "/" {
-            return Some(Expression::Identifier(num));
+            return Some(Expression::Number(num));
         }
     }
 
@@ -68,7 +68,7 @@ pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Ex
 
         if let Some(right) = right {
             return Some(Expression::Binary(
-                Box::new(Expression::Identifier(num)),
+                Box::new(Expression::Number(num)),
                 operator,
                 Box::new(right),
             ));
