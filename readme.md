@@ -5,4 +5,9 @@
 #### Features:
 
 -   [ ] **Suport to Next.js**
--   [ ] **Custom modules**
+
+#### Custom modules:
+- [ ] **Http**
+- [ ] **fs**
+- [ ] **path**
+- [ ] **crypto**
