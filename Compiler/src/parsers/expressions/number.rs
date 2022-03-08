@@ -8,8 +8,8 @@ use super::{expression, Expression};
 pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Expression> {
     let allowedTypes = ["Number", "Identifier"];
 
-    let next = pointer.previewNext(false, false, false);
-    pointer.take("Number", true, true, true);
+    let next = pointer.previewNext(false, false);
+    pointer.take("Number", true, true);
 
     if let Some(data) = next {
         if allowedTypes.contains(&data.tokenType().as_str()) {
@@ -32,8 +32,8 @@ pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Ex
                     _ => break,
                 }
 
-                let next = pointer.previewNext(false, false, false);
-                pointer.next(true, true, true);
+                let next = pointer.previewNext(false, false);
+                pointer.next(true, true);
 
                 if let Some(result) = next {
                     if allowedTypes.contains(&result.tokenType().as_str()) {
@@ -54,7 +54,7 @@ pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Ex
         num.pop();
     }
 
-    let next = pointer.previewNext(false, false, false);
+    let next = pointer.previewNext(false, false);
 
     if let Some(data) = next {
         if data.tokenValue() == "/" {
@@ -62,7 +62,7 @@ pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Ex
         }
     }
 
-    let op = pointer.take("Operator", true, true, true);
+    let op = pointer.take("Operator", true, true);
     if let Some(operator) = op {
         let right = expression(pointer);
 

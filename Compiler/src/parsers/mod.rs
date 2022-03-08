@@ -7,14 +7,8 @@ use crate::utils::pointer::Pointer;
 mod expressions;
 mod statements;
 
-use expressions::expression;
-pub use expressions::Expression;
-
-#[derive(Debug, Clone)]
-pub enum StatementToken {
-    VariableDeclaration(Token, Expression),
-    ConstantDeclaration(Token, Expression),
-}
+pub use expressions::{expression, Expression};
+pub use statements::{statements, StatementToken};
 
 #[derive(Debug, Clone)]
 pub enum ParsedToken {
@@ -26,7 +20,7 @@ pub enum ParsedToken {
 pub struct Parser {
     pointer: Pointer,
     code: String,
-    names: Vec<String>,
+    body: Vec<ParsedToken>,
 }
 
 impl Parser {
@@ -34,23 +28,30 @@ impl Parser {
         let mut pointer = ManuallyDrop::new(self.pointer.clone());
 
         if pointer.token.is_none() {
-            pointer.next(true, true, true);
+            pointer.next(true, true);
         }
 
         loop {
             match pointer.token.clone() {
                 None | Some(Token::EOF) => break,
                 Some(Token::Keyword(keyword, _)) => {
-                    let stmt = statements::statements(&mut pointer, &mut self.names, keyword);
+                    let stmt = statements::statements(&mut pointer, &mut self.body, keyword);
 
                     if let Some(statement) = stmt {
-                        generate(ParsedToken::Statement(statement), &mut self.code);
+                        let parsed = ParsedToken::Statement(statement);
+                        generate(parsed.clone(), &mut self.code);
+
+                        self.body.push(parsed);
                     }
                 }
                 _ => {
                     let expr = expression(&mut pointer);
                     if let Some(expression) = expr {
-                        generate(ParsedToken::Expr(expression.clone()), &mut self.code);
+                        let parsed = ParsedToken::Expr(expression);
+
+                        generate(parsed.clone(), &mut self.code);
+
+                        self.body.push(parsed);
 
                         continue;
                     }
@@ -62,6 +63,10 @@ impl Parser {
             }
         }
 
+        if self.code.ends_with("\n") {
+            self.code.pop();
+        }
+
         println!("{}", self.code);
 
         drop(pointer);
@@ -71,7 +76,7 @@ impl Parser {
         Self {
             pointer: Pointer::new(tokenizer),
             code: String::new(),
-            names: vec![],
+            body: vec![],
         }
     }
 }

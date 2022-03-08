@@ -117,12 +117,7 @@ impl Tokenizer {
         }
     }
 
-    pub fn previewNextToken(
-        &mut self,
-        skipNewline: bool,
-        skipSemicolon: bool,
-        skipWhitespace: bool,
-    ) -> Option<Token> {
+    pub fn previewNextToken(&mut self, skipNewline: bool, skipWhitespace: bool) -> Option<Token> {
         let line = self.line;
         let letter = self.letter.clone();
         let cursor = self.cursor;
@@ -135,9 +130,6 @@ impl Tokenizer {
                     token = self.getToken();
                 }
                 Some(Token::Newline(_)) if skipNewline => {
-                    token = self.getToken();
-                }
-                Some(Token::Punctuation(punc, _)) if punc == ";" && skipSemicolon => {
                     token = self.getToken();
                 }
                 _ => break,
@@ -260,7 +252,7 @@ impl Tokenizer {
             cursor: 0,
             line: 1,
             letter: lines[0 as usize].iter().nth(0).unwrap().to_string(),
-            keywords: Vec::from(["let", "const", "return", "def", "end"])
+            keywords: Vec::from(["let", "const", "async", "def", "return", "end"])
                 .iter()
                 .map(|data| data.to_string())
                 .collect(),

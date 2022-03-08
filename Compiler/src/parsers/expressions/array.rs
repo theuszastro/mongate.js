@@ -6,7 +6,7 @@ use crate::tokenizer::Token;
 use crate::utils::pointer::Pointer;
 
 pub fn array(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
-    pointer.take("Brackets", true, true, true);
+    pointer.take("Brackets", true, true);
 
     let mut values: Vec<Expression> = vec![];
 
@@ -21,7 +21,7 @@ pub fn array(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
                     match pointer.token.clone() {
                         Some(Token::Punctuation(pun, _)) => {
                             if pun == "," {
-                                pointer.next(true, true, true);
+                                pointer.next(true, true);
 
                                 continue;
                             }
@@ -42,7 +42,7 @@ pub fn array(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
                 match pointer.token.clone() {
                     Some(Token::Brackets(bra, _)) if bra == "]" => break,
                     Some(Token::Punctuation(pun, _)) if pun == "," => {
-                        pointer.take("Punctuation", true, true, true);
+                        pointer.take("Punctuation", true, true);
 
                         values.push(Expression::Undefined);
 
@@ -56,7 +56,7 @@ pub fn array(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
         }
     }
 
-    let close = pointer.take("Brackets", true, true, true);
+    let close = pointer.take("Brackets", true, true);
     if close.is_none() || close.unwrap().tokenValue() != "]" {
         pointer.error("Expected ']'".to_string());
     }

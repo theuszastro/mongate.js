@@ -6,7 +6,7 @@ use crate::tokenizer::Token;
 use crate::utils::pointer::Pointer;
 
 pub fn object(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
-    pointer.take("Brackets", true, true, true);
+    pointer.take("Brackets", true, true);
 
     let mut values: Vec<(String, Expression)> = vec![];
 
@@ -16,7 +16,7 @@ pub fn object(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
             _ => {
                 let mut key = String::new();
 
-                let identifer = pointer.take("Identifier", true, true, true);
+                let identifer = pointer.take("Identifier", true, true);
                 if identifer.is_none() {
                     let keyString = expression(pointer);
                     if keyString.is_none() {
@@ -32,7 +32,7 @@ pub fn object(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
                     key = identifer.unwrap().tokenValue();
                 }
 
-                let colon = pointer.take("Punctuation", true, true, true);
+                let colon = pointer.take("Punctuation", true, true);
                 if colon.is_none() || colon.unwrap().tokenValue() != ":" {
                     pointer.error("Expected ':'".to_string());
                 }
@@ -47,7 +47,7 @@ pub fn object(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
                 match pointer.token.clone() {
                     Some(Token::Punctuation(pun, _)) => {
                         if pun == "," {
-                            pointer.next(true, true, true);
+                            pointer.next(true, true);
 
                             continue;
                         }
@@ -66,7 +66,7 @@ pub fn object(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
         }
     }
 
-    let close = pointer.take("Brackets", true, true, true);
+    let close = pointer.take("Brackets", true, true);
     if close.is_none() || close.unwrap().tokenValue() != "}" {
         pointer.error("Expected '}'".to_string());
     }

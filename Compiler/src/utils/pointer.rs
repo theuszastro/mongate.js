@@ -26,27 +26,14 @@ impl Pointer {
         SyntaxError::new(filename.clone(), lines.clone(), *line, reason);
     }
 
-    pub fn previewNext(
-        &mut self,
-        skipNewline: bool,
-        skipSemicolon: bool,
-        skipWhitespace: bool,
-    ) -> Option<Token> {
-        return self
-            .tokenizer
-            .previewNextToken(skipNewline, skipSemicolon, skipWhitespace);
+    pub fn previewNext(&mut self, skipNewline: bool, skipWhitespace: bool) -> Option<Token> {
+        return self.tokenizer.previewNextToken(skipNewline, skipWhitespace);
     }
 
-    pub fn take(
-        &mut self,
-        r#type: &str,
-        skipNewline: bool,
-        skipSemicolon: bool,
-        skipWhitespace: bool,
-    ) -> Option<Token> {
+    pub fn take(&mut self, r#type: &str, skipNewline: bool, skipWhitespace: bool) -> Option<Token> {
         if let Some(token) = self.token.clone() {
             if token.tokenType() == r#type.to_string() {
-                self.next(skipNewline, skipSemicolon, skipWhitespace);
+                self.next(skipNewline, skipWhitespace);
 
                 return Some(token);
             }
@@ -55,12 +42,7 @@ impl Pointer {
         None
     }
 
-    pub fn next(
-        &mut self,
-        skipNewline: bool,
-        skipSemicolon: bool,
-        skipWhitespace: bool,
-    ) -> Option<Token> {
+    pub fn next(&mut self, skipNewline: bool, skipWhitespace: bool) -> Option<Token> {
         match self.tokenizer.getToken() {
             None | Some(Token::EOF) => {
                 self.token = None;
@@ -68,13 +50,10 @@ impl Pointer {
                 None
             }
             Some(Token::Newline(_)) if skipNewline => {
-                return self.next(skipNewline, skipSemicolon, skipWhitespace)
+                return self.next(skipNewline, skipWhitespace)
             }
             Some(Token::Whitespace(_)) if skipWhitespace => {
-                return self.next(skipNewline, skipSemicolon, skipWhitespace)
-            }
-            Some(Token::Punctuation(data, _)) if data == ";" && skipNewline => {
-                return self.next(skipNewline, skipSemicolon, skipWhitespace)
+                return self.next(skipNewline, skipWhitespace)
             }
             Some(Token::Identifier(data, _)) if data.len() <= 0 => None,
             data => {

@@ -1,27 +1,24 @@
 use std::mem::ManuallyDrop;
 
-use crate::parsers::{expression, Expression, StatementToken};
-use crate::utils::pointer::Pointer;
+use crate::parsers::{expression, Expression, ParsedToken, StatementToken};
+use crate::tokenizer::Token;
+use crate::utils::{findName, pointer::Pointer};
 
 pub fn variable(
     pointer: &mut ManuallyDrop<Pointer>,
-    names: &mut Vec<String>,
+    body: &mut Vec<ParsedToken>,
     isConstant: bool,
 ) -> Option<StatementToken> {
-    pointer.take("Keyword", true, true, true);
+    pointer.take("Keyword", true, true);
 
-    if let Some(name) = pointer.take("Identifier", true, true, true) {
-        if names.contains(&name.tokenValue()) {
-            pointer.error(format!(
-                "Identifier '{}' already declared",
-                name.tokenValue()
-            ));
+    if let Some(Token::Identifier(name, _)) = pointer.take("Identifier", true, true) {
+        let exists = findName(&body, name.clone());
+        if exists.is_some() {
+            pointer.error(format!("Identifier '{}' already declared", name));
         }
 
-        names.push(name.tokenValue());
-
-        if let Some(assign) = pointer.take("Punctuation", true, true, true) {
-            if assign.tokenValue() == "=" {
+        if let Some(Token::Punctuation(punc, _)) = pointer.take("Punctuation", true, true) {
+            if punc == "=" {
                 let expr = expression(pointer);
 
                 if let Some(expr) = expr {
@@ -34,24 +31,24 @@ pub fn variable(
 
                 pointer.error("Expected expression".to_string());
             }
-
-            pointer.error("Expected '='".to_string());
-        } else {
-            if isConstant {
-                return Some(StatementToken::ConstantDeclaration(
-                    name,
-                    Expression::Undefined,
-                ));
-            } else {
-                return Some(StatementToken::VariableDeclaration(
-                    name,
-                    Expression::Undefined,
-                ));
-            }
         }
+
+        if isConstant {
+            pointer.error("Expected '='".to_string());
+
+            return None;
+        }
+
+        return Some(StatementToken::VariableDeclaration(
+            name,
+            Expression::Undefined,
+        ));
     }
 
-    pointer.error("Expected a variable name".to_string());
+    pointer.error(format!(
+        "Expected a {} name",
+        if isConstant { "constant" } else { "variable" }
+    ));
 
     None
 }

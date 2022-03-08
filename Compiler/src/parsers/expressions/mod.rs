@@ -20,24 +20,25 @@ pub enum Expression {
     Object(Vec<(String, Expression)>),
     ParenBinary(Box<Expression>),
     Binary(Box<Expression>, Token, Box<Expression>),
+    FunctionArg(String, Option<Box<Expression>>),
     Null,
     Undefined,
 }
 
 pub fn expression(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
-    match pointer.token.clone() {
+    let expr = match pointer.token.clone() {
         Some(Token::Undefined(_)) => {
-            pointer.take("Undefined", true, true, true);
+            pointer.take("Undefined", true, true);
 
             Some(Expression::Undefined)
         }
         Some(Token::Null(_)) => {
-            pointer.take("Null", true, true, true);
+            pointer.take("Null", true, true);
 
             Some(Expression::Null)
         }
         Some(Token::Identifier(value, _)) => {
-            pointer.take("Identifier", true, true, true);
+            pointer.take("Identifier", true, true);
 
             if ["true", "false"].contains(&value.as_str()) {
                 return Some(Expression::Boolean(value));
@@ -49,11 +50,11 @@ pub fn expression(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
             "[" => array::array(pointer),
             "{" => object::object(pointer),
             "(" => {
-                pointer.take("Brackets", true, true, true);
+                pointer.take("Brackets", true, true);
 
                 let expr = expression(pointer);
                 if let Some(expr) = expr {
-                    let close = pointer.take("Brackets", true, true, true);
+                    let close = pointer.take("Brackets", true, true);
 
                     if close.is_none() {
                         pointer.error("Expected ')'".to_string());
@@ -70,5 +71,13 @@ pub fn expression(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
         Some(Token::Symbol(symbol, _)) => string::string(pointer, symbol),
         Some(Token::Number(num, _)) => number::number(pointer, num),
         _ => None,
+    };
+
+    if let Some(Token::Punctuation(pun, _)) = pointer.token.clone() {
+        if pun == ";" {
+            pointer.take("Punctuation", true, true);
+        }
     }
+
+    expr
 }

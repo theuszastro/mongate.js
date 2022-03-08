@@ -7,7 +7,7 @@ use crate::utils::pointer::Pointer;
 
 pub fn string(pointer: &mut ManuallyDrop<Pointer>, symbol: String) -> Option<Expression> {
     if ["'", "\""].contains(&symbol.as_str()) {
-        pointer.take("Symbol", false, false, false);
+        pointer.take("Symbol", false, false);
 
         let mut string = String::new();
 
@@ -17,7 +17,7 @@ pub fn string(pointer: &mut ManuallyDrop<Pointer>, symbol: String) -> Option<Exp
                     if string.ends_with("\\") {
                         string.push_str(symbol.as_str());
 
-                        pointer.take("Symbol", false, false, false);
+                        pointer.take("Symbol", false, false);
 
                         continue;
                     }
@@ -28,13 +28,13 @@ pub fn string(pointer: &mut ManuallyDrop<Pointer>, symbol: String) -> Option<Exp
                 Some(data) => {
                     string.push_str(data.tokenValue().as_str());
 
-                    pointer.next(false, false, false);
+                    pointer.next(false, false);
                 }
                 None => break,
             }
         }
 
-        let close = pointer.take("Symbol", true, true, true);
+        let close = pointer.take("Symbol", true, true);
         if close.is_none() || close.clone().unwrap().tokenValue() != symbol {
             pointer.error(format!("Expected '{}'", symbol));
         }
