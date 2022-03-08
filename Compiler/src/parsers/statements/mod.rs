@@ -10,8 +10,7 @@ pub fn statements(pointer: &mut ManuallyDrop<Pointer>, keyword: String) -> Optio
     pointer.take("Keyword", true, true, true);
 
     match keyword.as_str() {
-        "let" => variable::variable(pointer),
-        "const" => variable::constant(pointer),
+        "let" | "const" => variable::variable(pointer, keyword == "const"),
         _ => None,
     }
 }

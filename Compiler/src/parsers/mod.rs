@@ -1,6 +1,6 @@
 use std::mem::ManuallyDrop;
 
-use crate::generation::CodeGeneration;
+use crate::generation::generate;
 use crate::tokenizer::{Token, Tokenizer};
 use crate::utils::pointer::Pointer;
 
@@ -25,7 +25,7 @@ pub enum ParsedToken {
 #[derive(Debug)]
 pub struct Parser {
     pointer: Pointer,
-    generation: CodeGeneration,
+    code: String,
 }
 
 impl Parser {
@@ -43,16 +43,13 @@ impl Parser {
                     let stmt = statements::statements(&mut pointer, keyword);
 
                     if let Some(statement) = stmt {
-                        println!("{:?}", statement);
-
-                        self.generation.generate(ParsedToken::Statement(statement));
+                        generate(ParsedToken::Statement(statement), &mut self.code);
                     }
                 }
                 _ => {
                     let expr = expression(&mut pointer);
                     if let Some(expression) = expr {
-                        self.generation
-                            .generate(ParsedToken::Expr(expression.clone()));
+                        generate(ParsedToken::Expr(expression.clone()), &mut self.code);
 
                         continue;
                     }
@@ -64,7 +61,7 @@ impl Parser {
             }
         }
 
-        println!("{}", self.generation.code);
+        println!("{}", self.code);
 
         drop(pointer);
     }
@@ -72,7 +69,7 @@ impl Parser {
     pub fn new(tokenizer: Tokenizer) -> Self {
         Self {
             pointer: Pointer::new(tokenizer),
-            generation: CodeGeneration::new(),
+            code: String::new(),
         }
     }
 }

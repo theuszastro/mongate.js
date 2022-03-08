@@ -87,13 +87,10 @@ impl Tokenizer {
     }
 
     fn isLetter(&self) -> bool {
-        let regex = Regex::new("[a-zA-Z0-9]").unwrap();
+        let regex = Regex::new("[a-zA-Z0-9_]").unwrap();
         let letter = self.letter.as_str();
 
-        match letter {
-            "_" => true,
-            _ => regex.is_match(remove_diacritics(letter).as_str()),
-        }
+        regex.is_match(remove_diacritics(letter).as_str())
     }
 
     fn changeLetter(&mut self) {
