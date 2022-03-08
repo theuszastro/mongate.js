@@ -3,10 +3,23 @@ use std::mem::ManuallyDrop;
 use crate::parsers::{expression, Expression, StatementToken};
 use crate::utils::pointer::Pointer;
 
-pub fn variable(pointer: &mut ManuallyDrop<Pointer>, isConstant: bool) -> Option<StatementToken> {
+pub fn variable(
+    pointer: &mut ManuallyDrop<Pointer>,
+    names: &mut Vec<String>,
+    isConstant: bool,
+) -> Option<StatementToken> {
     pointer.take("Keyword", true, true, true);
 
     if let Some(name) = pointer.take("Identifier", true, true, true) {
+        if names.contains(&name.tokenValue()) {
+            pointer.error(format!(
+                "Identifier '{}' already declared",
+                name.tokenValue()
+            ));
+        }
+
+        names.push(name.tokenValue());
+
         if let Some(assign) = pointer.take("Punctuation", true, true, true) {
             if assign.tokenValue() == "=" {
                 let expr = expression(pointer);

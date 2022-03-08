@@ -6,11 +6,15 @@ use super::StatementToken;
 
 mod variable;
 
-pub fn statements(pointer: &mut ManuallyDrop<Pointer>, keyword: String) -> Option<StatementToken> {
+pub fn statements(
+    pointer: &mut ManuallyDrop<Pointer>,
+    names: &mut Vec<String>,
+    keyword: String,
+) -> Option<StatementToken> {
     pointer.take("Keyword", true, true, true);
 
     match keyword.as_str() {
-        "let" | "const" => variable::variable(pointer, keyword == "const"),
+        "let" | "const" => variable::variable(pointer, names, keyword == "const"),
         _ => None,
     }
 }

@@ -26,6 +26,7 @@ pub enum ParsedToken {
 pub struct Parser {
     pointer: Pointer,
     code: String,
+    names: Vec<String>,
 }
 
 impl Parser {
@@ -40,7 +41,7 @@ impl Parser {
             match pointer.token.clone() {
                 None | Some(Token::EOF) => break,
                 Some(Token::Keyword(keyword, _)) => {
-                    let stmt = statements::statements(&mut pointer, keyword);
+                    let stmt = statements::statements(&mut pointer, &mut self.names, keyword);
 
                     if let Some(statement) = stmt {
                         generate(ParsedToken::Statement(statement), &mut self.code);
@@ -70,6 +71,7 @@ impl Parser {
         Self {
             pointer: Pointer::new(tokenizer),
             code: String::new(),
+            names: vec![],
         }
     }
 }
