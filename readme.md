@@ -1,13 +1,19 @@
 # Nylock Lang
+## Compiled to JavaScript
 
-### Compiled to JavaScript
+#### Variaveis and constant: 
+```
+    let name = value;
+    const name = value;
+```
 
-#### Features:
+#### Functions: 
+```
+    fn calc(a, b) {
+        # ...
+    }
 
--   [ ] **Suport to Next.js**
-
-#### Custom modules:
-- [ ] **Http**
-- [ ] **fs**
-- [ ] **path**
-- [ ] **crypto**
+    async fn calc(a, b = 2) {
+        # ...
+    }
+```
