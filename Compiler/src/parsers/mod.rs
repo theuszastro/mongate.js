@@ -8,7 +8,7 @@ mod expressions;
 mod statements;
 
 pub use expressions::{expression, Expression};
-pub use statements::{statements, StatementToken};
+pub use statements::{readBlock, statements, StatementToken};
 
 #[derive(Debug, Clone)]
 pub enum ParsedToken {

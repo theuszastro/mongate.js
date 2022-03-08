@@ -252,7 +252,7 @@ impl Tokenizer {
             cursor: 0,
             line: 1,
             letter: lines[0 as usize].iter().nth(0).unwrap().to_string(),
-            keywords: Vec::from(["let", "const", "async", "def", "return", "end"])
+            keywords: Vec::from(["let", "const", "async", "fn", "return"])
                 .iter()
                 .map(|data| data.to_string())
                 .collect(),

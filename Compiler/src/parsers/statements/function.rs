@@ -1,65 +1,86 @@
 use crate::parsers::ParsedToken;
 use std::mem::ManuallyDrop;
 
-use crate::parsers::{expression, statements, Expression, StatementToken};
+use super::block::readBlock;
+
+use crate::parsers::{expression, Expression, StatementToken};
 use crate::tokenizer::Token;
 use crate::utils::{findName, pointer::Pointer};
 
 fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut Vec<ParsedToken>) -> Vec<Expression> {
     let mut args: Vec<Expression> = vec![];
 
-    loop {
-        if let Some(Token::Identifier(arg, _)) = pointer.take("Identifier", true, true) {
-            if let Some(Token::Punctuation(punc, _)) = pointer.take("Punctuation", true, true) {
-                match punc.as_str() {
-                    "=" => {
-                        if let Some(value) = expression(pointer) {
-                            let expr = Expression::FunctionArg(arg.clone(), Some(Box::new(value)));
+    pointer.take("Brackets", true, true);
 
-                            args.push(expr.clone());
-                            body.push(ParsedToken::Expr(expr));
+    if let Some(Token::Brackets(brack, _)) = pointer.token.clone() {
+        if brack == ")" {
+            pointer.next(true, true);
 
-                            match pointer.token.clone() {
-                                Some(Token::Punctuation(punc, _)) => {
-                                    if punc == "," {
-                                        pointer.next(true, true);
-
-                                        continue;
-                                    }
-
-                                    pointer.error(format!("Unexpected '{}'", punc));
-                                }
-                                _ => {}
-                            }
-
-                            continue;
-                        }
-
-                        pointer.error(format!("Unexpected '{}'", punc));
-                    }
-                    "," => {
-                        if let Some(Token::Identifier(_, _)) = pointer.token.clone() {
-                            let expr = Expression::FunctionArg(arg.clone(), None);
-
-                            args.push(expr.clone());
-                            body.push(ParsedToken::Expr(expr));
-
-                            continue;
-                        }
-
-                        pointer.error("Unexpected ','".to_string());
-                    }
-                    data => pointer.error(format!("Unexpected: {}", data)),
-                }
-            }
-
-            let expr = Expression::FunctionArg(arg.clone(), None);
-
-            args.push(expr.clone());
-            body.push(ParsedToken::Expr(expr));
+            return args;
         }
+    }
 
-        break;
+    loop {
+        match pointer.token.clone() {
+            Some(Token::Brackets(brack, _)) if brack == ")" => {
+                pointer.take("Brackets", true, true);
+
+                break;
+            }
+            Some(Token::Identifier(arg, _)) => {
+                pointer.take("Identifier", true, true);
+
+                match pointer.token.clone() {
+                    Some(Token::Punctuation(punc, _)) => {
+                        pointer.take("Punctuation", true, true);
+
+                        match punc.as_str() {
+                            "=" => {
+                                if let Some(value) = expression(pointer) {
+                                    let expr = Expression::FunctionArg(arg, Some(Box::new(value)));
+
+                                    args.push(expr.clone());
+                                    body.push(ParsedToken::Expr(expr));
+
+                                    match pointer.token.clone() {
+                                        Some(Token::Punctuation(punc, _)) => {
+                                            if punc == "," {
+                                                pointer.next(true, true);
+
+                                                continue;
+                                            }
+                                            pointer.error(format!("Unexpected '{}'", punc));
+                                        }
+                                        _ => {}
+                                    }
+                                    continue;
+                                }
+                                pointer.error(format!("Unexpected '{}'", punc));
+                            }
+                            "," => {
+                                if let Some(Token::Identifier(_, _)) = pointer.token.clone() {
+                                    let expr = Expression::FunctionArg(arg.clone(), None);
+                                    args.push(expr.clone());
+                                    body.push(ParsedToken::Expr(expr));
+                                    continue;
+                                }
+                                pointer.error("Unexpected ','".to_string());
+                            }
+                            data => pointer.error(format!("Unexpected: {}", data)),
+                        }
+                    }
+
+                    _ => {}
+                }
+
+                let expr = Expression::FunctionArg(arg.clone(), None);
+
+                args.push(expr.clone());
+                body.push(ParsedToken::Expr(expr));
+            }
+            None => pointer.error("Expected ')'".to_string()),
+            _ => {}
+        }
     }
 
     args
@@ -71,8 +92,8 @@ pub fn function(
     isAsync: bool,
 ) -> Option<StatementToken> {
     if isAsync {
-        let def = pointer.take("Keyword", true, true);
-        if def.is_none() {
+        let func = pointer.take("Keyword", true, true);
+        if func.is_none() {
             pointer.error("Unexpected 'async'".to_string());
         }
     }
@@ -87,36 +108,12 @@ pub fn function(
 
         let args = readArgs(pointer, &mut funcBody);
 
-        loop {
-            match pointer.token.clone() {
-                Some(Token::Keyword(key, _)) => {
-                    if key == "end" {
-                        pointer.take("Keyword", true, true);
-
-                        break;
-                    }
-
-                    if let Some(stmt) = statements(pointer, &mut funcBody, key) {
-                        funcBody.push(ParsedToken::Statement(stmt));
-
-                        continue;
-                    }
-
-                    break;
-                }
-                token => {
-                    if token.is_none() {
-                        pointer.error("Expected a 'end' keyword".to_string());
-                    }
-
-                    if let Some(expr) = expression(pointer) {
-                        funcBody.push(ParsedToken::Expr(expr));
-
-                        continue;
-                    }
-                }
-            }
+        let open = pointer.take("Brackets", true, true);
+        if open.is_none() || open.unwrap().tokenValue() != "{" {
+            pointer.error("Expected '{'".to_string());
         }
+
+        readBlock(pointer, &mut funcBody);
 
         return Some(StatementToken::FunctionDeclaration(
             name, args, funcBody, isAsync,
