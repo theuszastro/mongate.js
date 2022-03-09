@@ -1,6 +1,6 @@
 use std::mem::ManuallyDrop;
 
-use crate::utils::{AvoidingBlock, Pointer, StatementToken};
+use crate::utils::{HoistingBlock, Pointer, StatementToken};
 
 mod block;
 mod function;
@@ -10,7 +10,7 @@ pub use block::readBlock;
 
 pub fn statements(
     pointer: &mut ManuallyDrop<Pointer>,
-    body: &mut AvoidingBlock,
+    body: &mut HoistingBlock,
     keyword: String,
 ) -> Option<StatementToken> {
     pointer.take("Keyword", true, true);

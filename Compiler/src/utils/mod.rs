@@ -2,10 +2,10 @@ mod pointer;
 mod structs;
 
 pub use pointer::Pointer;
-pub use structs::{AvoidingBlock, Expression, ParsedToken, StatementToken, Token, TokenContext};
+pub use structs::{Expression, HoistingBlock, ParsedToken, StatementToken, Token, TokenContext};
 
-pub fn findBody(body: AvoidingBlock, searchName: String) -> Option<ParsedToken> {
-    let AvoidingBlock { block, current } = body;
+pub fn findBody(body: HoistingBlock, searchName: String) -> Option<ParsedToken> {
+    let HoistingBlock { block, current } = body;
 
     let exists = findName(&current, searchName.clone());
     if exists.is_none() {

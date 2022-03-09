@@ -1,12 +1,11 @@
-use crate::utils::AvoidingBlock;
 use std::mem::ManuallyDrop;
 
 use crate::parsers::expression;
-use crate::utils::{findName, Expression, Pointer, StatementToken, Token};
+use crate::utils::{findName, Expression, HoistingBlock, Pointer, StatementToken, Token};
 
 pub fn variable(
     pointer: &mut ManuallyDrop<Pointer>,
-    body: &mut AvoidingBlock,
+    body: &mut HoistingBlock,
     isConstant: bool,
 ) -> Option<StatementToken> {
     pointer.take("Keyword", true, true);

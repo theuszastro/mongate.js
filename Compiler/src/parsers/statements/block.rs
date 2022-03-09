@@ -2,9 +2,9 @@ use std::mem::ManuallyDrop;
 
 use crate::parsers::{expression, statements};
 use crate::utils::findBody;
-use crate::utils::{AvoidingBlock, Expression, ParsedToken, Pointer, Token};
+use crate::utils::{Expression, HoistingBlock, ParsedToken, Pointer, Token};
 
-pub fn readBlock(pointer: &mut ManuallyDrop<Pointer>, body: &mut AvoidingBlock) {
+pub fn readBlock(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) {
     loop {
         match pointer.token.clone() {
             Some(Token::Brackets(brack, _)) if brack == "}" => {

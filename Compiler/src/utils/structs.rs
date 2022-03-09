@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
-pub struct AvoidingBlock {
-    pub block: Box<Option<AvoidingBlock>>,
+pub struct HoistingBlock {
+    pub block: Box<Option<HoistingBlock>>,
     pub current: Vec<ParsedToken>,
 }
 

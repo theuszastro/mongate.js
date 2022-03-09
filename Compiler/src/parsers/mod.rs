@@ -2,7 +2,7 @@ use std::mem::ManuallyDrop;
 
 use crate::generation::generate;
 use crate::tokenizer::Tokenizer;
-use crate::utils::{AvoidingBlock, ParsedToken, Pointer, Token};
+use crate::utils::{HoistingBlock, ParsedToken, Pointer, Token};
 
 mod expressions;
 mod statements;
@@ -14,7 +14,7 @@ pub use statements::{readBlock, statements};
 pub struct Parser {
     pointer: Pointer,
     code: String,
-    body: AvoidingBlock,
+    body: HoistingBlock,
 }
 
 impl Parser {
@@ -70,7 +70,7 @@ impl Parser {
         Self {
             pointer: Pointer::new(tokenizer),
             code: String::new(),
-            body: AvoidingBlock {
+            body: HoistingBlock {
                 block: Box::new(None),
                 current: vec![],
             },

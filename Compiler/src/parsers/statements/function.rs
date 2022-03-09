@@ -4,10 +4,10 @@ use super::block::readBlock;
 
 use crate::parsers::expression;
 use crate::utils::{
-    findName, AvoidingBlock, Expression, ParsedToken, Pointer, StatementToken, Token,
+    findName, Expression, HoistingBlock, ParsedToken, Pointer, StatementToken, Token,
 };
 
-fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut AvoidingBlock) -> Vec<Expression> {
+fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Vec<Expression> {
     let mut args: Vec<Expression> = vec![];
 
     pointer.take("Brackets", true, true);
@@ -88,7 +88,7 @@ fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut AvoidingBlock) -> Ve
 
 pub fn function(
     pointer: &mut ManuallyDrop<Pointer>,
-    body: &mut AvoidingBlock,
+    body: &mut HoistingBlock,
     isAsync: bool,
 ) -> Option<StatementToken> {
     if isAsync {
@@ -104,7 +104,7 @@ pub fn function(
             pointer.error(format!("Identifier '{}' already declared", name));
         }
 
-        let mut funcBody = AvoidingBlock {
+        let mut funcBody = HoistingBlock {
             current: vec![],
             block: Box::new(Some(body.clone())),
         };
