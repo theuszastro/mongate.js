@@ -1,6 +1,7 @@
 use std::mem::ManuallyDrop;
 
-use crate::utils::{HoistingBlock, Pointer, StatementToken, Token};
+use crate::parsers::expression;
+use crate::utils::{Expression, HoistingBlock, Pointer, StatementToken, Token};
 
 mod block;
 mod comment;
@@ -20,6 +21,16 @@ pub fn statements(
             match keyword.as_str() {
                 "let" | "const" => variable::variable(pointer, body, keyword == "const"),
                 "fn" | "async" => function::function(pointer, body, keyword == "async"),
+                "return" => {
+                    pointer.take("Keyword", true, true);
+
+                    let expr = expression(pointer, body);
+                    if let Some(expr) = expr {
+                        return Some(StatementToken::ReturnDeclaration(expr));
+                    }
+
+                    Some(StatementToken::ReturnDeclaration(Expression::Undefined))
+                }
                 _ => None,
             }
         }
@@ -40,6 +51,11 @@ pub fn statements(
                 }
                 _ => None,
             }
+        }
+        Some(Token::Punctuation(punc, _)) if punc == ";" => {
+            pointer.take("Punctuation", true, true);
+
+            return statements(pointer, body);
         }
         _ => None,
     }

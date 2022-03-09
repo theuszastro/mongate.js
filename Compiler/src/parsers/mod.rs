@@ -38,11 +38,19 @@ impl Parser {
                         continue;
                     }
 
-                    if let Some(expression) = expression(&mut pointer) {
+                    if let Some(expression) = expression(&mut pointer, &mut self.body) {
                         let parsed = ParsedToken::Expr(expression);
 
                         generate(parsed.clone(), &mut self.code);
                         self.body.current.push(parsed);
+
+                        continue;
+                    }
+
+                    if let Some(Token::Punctuation(punc, _)) = pointer.token.clone() {
+                        if punc == ";" {
+                            pointer.take("Punctuation", true, true);
+                        }
 
                         continue;
                     }

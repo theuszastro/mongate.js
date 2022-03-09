@@ -11,16 +11,13 @@ pub fn variable(
     pointer.take("Keyword", true, true);
 
     if let Some(Token::Identifier(name, _)) = pointer.take("Identifier", true, true) {
-        let exists = findName(&body.current, name.clone());
-        if exists.is_some() {
+        if findName(&body.current, name.clone()).is_some() {
             pointer.error(format!("Identifier '{}' already declared", name));
         }
 
         if let Some(Token::Punctuation(punc, _)) = pointer.take("Punctuation", true, true) {
             if punc == "=" {
-                let expr = expression(pointer);
-
-                if let Some(expr) = expr {
+                if let Some(expr) = expression(pointer, body) {
                     if isConstant {
                         return Some(StatementToken::ConstantDeclaration(name, expr));
                     } else {

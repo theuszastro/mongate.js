@@ -1,10 +1,14 @@
 use std::mem::ManuallyDrop;
 
-use crate::utils::{Expression, Pointer, Token};
+use crate::utils::{Expression, HoistingBlock, Pointer, Token};
 
 use super::expression;
 
-pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Expression> {
+pub fn number(
+    pointer: &mut ManuallyDrop<Pointer>,
+    body: &mut HoistingBlock,
+    mut num: String,
+) -> Option<Expression> {
     let allowedTypes = ["Number", "Identifier"];
 
     let next = pointer.previewNext(false, false);
@@ -53,19 +57,16 @@ pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Ex
         num.pop();
     }
 
-    let next = pointer.previewNext(false, false);
-
-    if let Some(data) = next {
-        if data.tokenValue() == "/" {
-            return Some(Expression::Number(num));
+    if let Some(data) = pointer.previewNext(false, false) {
+        if let Some(Token::Operator(operator, _)) = pointer.token.clone() {
+            if data.tokenValue() == "/" && operator == "/" {
+                return Some(Expression::Number(num));
+            }
         }
     }
 
-    let op = pointer.take("Operator", true, true);
-    if let Some(operator) = op {
-        let right = expression(pointer);
-
-        if let Some(right) = right {
+    if let Some(operator) = pointer.take("Operator", true, true) {
+        if let Some(right) = expression(pointer, body) {
             return Some(Expression::Binary(
                 Box::new(Expression::Number(num)),
                 operator,
@@ -73,7 +74,11 @@ pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Ex
             ));
         }
 
-        pointer.error("Expected a right value".to_string());
+        if let Some(value) = pointer.token.clone() {
+            pointer.error(format!("Unexpected '{}'", value.tokenValue()));
+        } else {
+            pointer.error("Expected a right value".to_string());
+        }
     }
 
     Some(Expression::Number(num))

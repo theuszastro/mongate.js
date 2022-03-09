@@ -2,9 +2,9 @@ use std::mem::ManuallyDrop;
 
 use super::expression;
 
-use crate::utils::{Expression, Pointer, Token};
+use crate::utils::{Expression, HoistingBlock, Pointer, Token};
 
-pub fn array(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
+pub fn array(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Option<Expression> {
     pointer.take("Brackets", true, true);
 
     let mut values: Vec<Expression> = vec![];
@@ -13,8 +13,7 @@ pub fn array(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
         match pointer.token.clone() {
             Some(Token::Brackets(bra, _)) if bra == "]" => break,
             _ => {
-                let expr = expression(pointer);
-                if let Some(expr) = expr {
+                if let Some(expr) = expression(pointer, body) {
                     values.push(expr);
 
                     match pointer.token.clone() {
@@ -28,8 +27,7 @@ pub fn array(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
                             break;
                         }
                         _ => {
-                            let expr = expression(pointer);
-                            if expr.is_some() {
+                            if expression(pointer, body).is_some() {
                                 pointer.error("Expected ','".to_string());
                             }
                         }

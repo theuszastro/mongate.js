@@ -36,7 +36,7 @@ fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Ve
 
                         match punc.as_str() {
                             "=" => {
-                                if let Some(value) = expression(pointer) {
+                                if let Some(value) = expression(pointer, body) {
                                     let expr = Expression::FunctionArg(arg, Some(Box::new(value)));
 
                                     args.push(expr.clone());
@@ -53,6 +53,7 @@ fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Ve
                                         }
                                         _ => {}
                                     }
+
                                     continue;
                                 }
                                 pointer.error(format!("Unexpected '{}'", punc));
@@ -60,10 +61,13 @@ fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Ve
                             "," => {
                                 if let Some(Token::Identifier(_, _)) = pointer.token.clone() {
                                     let expr = Expression::FunctionArg(arg.clone(), None);
+
                                     args.push(expr.clone());
                                     body.current.push(ParsedToken::Expr(expr));
+
                                     continue;
                                 }
+
                                 pointer.error("Unexpected ','".to_string());
                             }
                             data => pointer.error(format!("Unexpected: {}", data)),
@@ -92,15 +96,13 @@ pub fn function(
     isAsync: bool,
 ) -> Option<StatementToken> {
     if isAsync {
-        let func = pointer.take("Keyword", true, true);
-        if func.is_none() {
+        if pointer.take("Keyword", true, true).is_none() {
             pointer.error("Unexpected 'async'".to_string());
         }
     }
 
     if let Some(Token::Identifier(name, _)) = pointer.take("Identifier", true, true) {
-        let exists = findName(&body.current, name.clone());
-        if exists.is_some() {
+        if findName(&body.current, name.clone()).is_some() {
             pointer.error(format!("Identifier '{}' already declared", name));
         }
 
