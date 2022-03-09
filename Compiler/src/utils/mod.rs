@@ -34,6 +34,7 @@ pub fn findName(body: &Vec<ParsedToken>, searchName: String) -> Option<ParsedTok
                         break;
                     }
                 }
+                _ => {}
             },
             ParsedToken::Expr(expr) => {
                 if let Expression::FunctionArg(name, _) = expr {

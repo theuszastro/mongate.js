@@ -67,6 +67,7 @@ pub fn generate(token: ParsedToken, allCode: &mut String) {
             StatementToken::FunctionDeclaration(name, args, body, isAsync) => {
                 allCode.push_str(&generate_function(name, args, body, isAsync));
             }
+            _ => {}
         },
     }
 }
@@ -84,25 +85,22 @@ fn generate_function(
         .map(|x| expression(x.clone()))
         .for_each(|x| code.push_str(&x));
 
-    code = code.trim().to_string();
-
-    if code.ends_with(",") {
+    if code.ends_with(", ") {
+        code.pop();
         code.pop();
     }
 
-    code.push_str(") { ");
+    code.push_str(") {");
 
     for item in body {
-        if let ParsedToken::Expr(expr) = item.clone() {
-            if let Expression::FunctionArg(_, _) = expr {
-                continue;
-            }
+        if let ParsedToken::Expr(Expression::FunctionArg(_, _)) = item.clone() {
+            continue;
         }
 
         generate(item, &mut code);
     }
 
-    code.push_str("} ");
+    code.push_str("}");
 
     code
 }

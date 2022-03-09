@@ -12,16 +12,13 @@ pub fn readBlock(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) 
 
                 break;
             }
-            Some(Token::Keyword(key, _)) => {
-                if let Some(stmt) = statements(pointer, body, key) {
+            _ => {
+                if let Some(stmt) = statements(pointer, body) {
                     body.current.push(ParsedToken::Statement(stmt));
 
                     continue;
                 }
 
-                break;
-            }
-            _ => {
                 if let Some(expr) = expression(pointer) {
                     match expr.clone() {
                         Expression::Identifier(name) => {
@@ -34,8 +31,6 @@ pub fn readBlock(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) 
                     }
 
                     body.current.push(ParsedToken::Expr(expr));
-
-                    continue;
                 }
             }
         }

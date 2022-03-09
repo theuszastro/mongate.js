@@ -46,6 +46,7 @@ pub enum Expression {
 
 #[derive(Debug, Clone)]
 pub enum StatementToken {
+    CommentDeclaration(String),
     VariableDeclaration(String, Expression),
     ConstantDeclaration(String, Expression),
     FunctionDeclaration(String, Vec<Expression>, Vec<ParsedToken>, bool),

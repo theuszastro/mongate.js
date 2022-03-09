@@ -28,23 +28,20 @@ impl Parser {
         loop {
             match pointer.token.clone() {
                 None | Some(Token::EOF) => break,
-                Some(Token::Keyword(keyword, _)) => {
-                    let stmt = statements::statements(&mut pointer, &mut self.body, keyword);
-
-                    if let Some(statement) = stmt {
-                        let parsed = ParsedToken::Statement(statement);
-                        generate(parsed.clone(), &mut self.code);
-
-                        self.body.current.push(parsed);
-                    }
-                }
                 _ => {
-                    let expr = expression(&mut pointer);
-                    if let Some(expression) = expr {
+                    if let Some(statement) = statements(&mut pointer, &mut self.body) {
+                        let parsed = ParsedToken::Statement(statement);
+
+                        generate(parsed.clone(), &mut self.code);
+                        self.body.current.push(parsed);
+
+                        continue;
+                    }
+
+                    if let Some(expression) = expression(&mut pointer) {
                         let parsed = ParsedToken::Expr(expression);
 
                         generate(parsed.clone(), &mut self.code);
-
                         self.body.current.push(parsed);
 
                         continue;
@@ -55,10 +52,6 @@ impl Parser {
                     }
                 }
             }
-        }
-
-        if self.code.ends_with("\n") {
-            self.code.pop();
         }
 
         println!("{}", self.code);
