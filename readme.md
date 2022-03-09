@@ -1,6 +1,12 @@
 # Nylock Lang
 ## Compiled to JavaScript
 
+#### Comments:
+```
+# ...
+// ...
+```
+
 #### Variaveis: 
 ```
 let name = value;
@@ -9,7 +15,7 @@ let name;
 
 #### Constants:
 ```
-    const name = value;
+const name = value;
 ```
 
 #### Functions: 
