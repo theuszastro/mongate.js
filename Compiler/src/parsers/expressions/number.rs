@@ -1,9 +1,8 @@
 use std::mem::ManuallyDrop;
 
-use crate::tokenizer::Token;
-use crate::utils::pointer::Pointer;
+use crate::utils::{Expression, Pointer, Token};
 
-use super::{expression, Expression};
+use super::expression;
 
 pub fn number(pointer: &mut ManuallyDrop<Pointer>, mut num: String) -> Option<Expression> {
     let allowedTypes = ["Number", "Identifier"];

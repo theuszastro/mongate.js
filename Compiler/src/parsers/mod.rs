@@ -1,26 +1,20 @@
 use std::mem::ManuallyDrop;
 
 use crate::generation::generate;
-use crate::tokenizer::{Token, Tokenizer};
-use crate::utils::pointer::Pointer;
+use crate::tokenizer::Tokenizer;
+use crate::utils::{AvoidingBlock, ParsedToken, Pointer, Token};
 
 mod expressions;
 mod statements;
 
-pub use expressions::{expression, Expression};
-pub use statements::{readBlock, statements, StatementToken};
-
-#[derive(Debug, Clone)]
-pub enum ParsedToken {
-    Expr(Expression),
-    Statement(StatementToken),
-}
+pub use expressions::expression;
+pub use statements::{readBlock, statements};
 
 #[derive(Debug)]
 pub struct Parser {
     pointer: Pointer,
     code: String,
-    body: Vec<ParsedToken>,
+    body: AvoidingBlock,
 }
 
 impl Parser {
@@ -41,7 +35,7 @@ impl Parser {
                         let parsed = ParsedToken::Statement(statement);
                         generate(parsed.clone(), &mut self.code);
 
-                        self.body.push(parsed);
+                        self.body.current.push(parsed);
                     }
                 }
                 _ => {
@@ -51,7 +45,7 @@ impl Parser {
 
                         generate(parsed.clone(), &mut self.code);
 
-                        self.body.push(parsed);
+                        self.body.current.push(parsed);
 
                         continue;
                     }
@@ -76,7 +70,10 @@ impl Parser {
         Self {
             pointer: Pointer::new(tokenizer),
             code: String::new(),
-            body: vec![],
+            body: AvoidingBlock {
+                block: Box::new(None),
+                current: vec![],
+            },
         }
     }
 }

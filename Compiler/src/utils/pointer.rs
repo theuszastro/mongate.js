@@ -1,5 +1,7 @@
 use crate::errors::SyntaxError;
-use crate::tokenizer::{Token, Tokenizer};
+use crate::tokenizer::Tokenizer;
+
+use super::Token;
 
 #[derive(Debug, Clone)]
 pub struct Pointer {

@@ -1,9 +1,8 @@
 use std::mem::ManuallyDrop;
 
-use super::{expression, Expression};
+use super::expression;
 
-use crate::tokenizer::Token;
-use crate::utils::pointer::Pointer;
+use crate::utils::{Expression, Pointer, Token};
 
 pub fn array(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
     pointer.take("Brackets", true, true);

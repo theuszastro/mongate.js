@@ -1,10 +1,10 @@
 use std::mem::ManuallyDrop;
 
-use crate::parsers::{expression, statements, ParsedToken};
-use crate::tokenizer::Token;
-use crate::utils::pointer::Pointer;
+use crate::parsers::{expression, statements};
+use crate::utils::findBody;
+use crate::utils::{AvoidingBlock, Expression, ParsedToken, Pointer, Token};
 
-pub fn readBlock(pointer: &mut ManuallyDrop<Pointer>, body: &mut Vec<ParsedToken>) {
+pub fn readBlock(pointer: &mut ManuallyDrop<Pointer>, body: &mut AvoidingBlock) {
     loop {
         match pointer.token.clone() {
             Some(Token::Brackets(brack, _)) if brack == "}" => {
@@ -14,20 +14,26 @@ pub fn readBlock(pointer: &mut ManuallyDrop<Pointer>, body: &mut Vec<ParsedToken
             }
             Some(Token::Keyword(key, _)) => {
                 if let Some(stmt) = statements(pointer, body, key) {
-                    body.push(ParsedToken::Statement(stmt));
+                    body.current.push(ParsedToken::Statement(stmt));
 
                     continue;
                 }
 
                 break;
             }
-            token => {
-                if token.is_none() {
-                    pointer.error("Expected a 'end' keyword".to_string());
-                }
-
+            _ => {
                 if let Some(expr) = expression(pointer) {
-                    body.push(ParsedToken::Expr(expr));
+                    match expr.clone() {
+                        Expression::Identifier(name) => {
+                            let exists = findBody(body.clone(), name.clone());
+                            if exists.is_none() {
+                                pointer.error(format!("Identifier '{}' not declared", name));
+                            }
+                        }
+                        _ => {}
+                    }
+
+                    body.current.push(ParsedToken::Expr(expr));
 
                     continue;
                 }

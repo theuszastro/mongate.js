@@ -1,9 +1,6 @@
 use std::mem::ManuallyDrop;
 
-use super::Expression;
-
-use crate::tokenizer::Token;
-use crate::utils::pointer::Pointer;
+use crate::utils::{Expression, Pointer, Token};
 
 pub fn regexp(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
     let next = pointer.previewNext(false, false);

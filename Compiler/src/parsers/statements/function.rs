@@ -1,13 +1,13 @@
-use crate::parsers::ParsedToken;
 use std::mem::ManuallyDrop;
 
 use super::block::readBlock;
 
-use crate::parsers::{expression, Expression, StatementToken};
-use crate::tokenizer::Token;
-use crate::utils::{findName, pointer::Pointer};
+use crate::parsers::expression;
+use crate::utils::{
+    findName, AvoidingBlock, Expression, ParsedToken, Pointer, StatementToken, Token,
+};
 
-fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut Vec<ParsedToken>) -> Vec<Expression> {
+fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut AvoidingBlock) -> Vec<Expression> {
     let mut args: Vec<Expression> = vec![];
 
     pointer.take("Brackets", true, true);
@@ -40,7 +40,7 @@ fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut Vec<ParsedToken>) ->
                                     let expr = Expression::FunctionArg(arg, Some(Box::new(value)));
 
                                     args.push(expr.clone());
-                                    body.push(ParsedToken::Expr(expr));
+                                    body.current.push(ParsedToken::Expr(expr));
 
                                     match pointer.token.clone() {
                                         Some(Token::Punctuation(punc, _)) => {
@@ -61,7 +61,7 @@ fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut Vec<ParsedToken>) ->
                                 if let Some(Token::Identifier(_, _)) = pointer.token.clone() {
                                     let expr = Expression::FunctionArg(arg.clone(), None);
                                     args.push(expr.clone());
-                                    body.push(ParsedToken::Expr(expr));
+                                    body.current.push(ParsedToken::Expr(expr));
                                     continue;
                                 }
                                 pointer.error("Unexpected ','".to_string());
@@ -76,7 +76,7 @@ fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut Vec<ParsedToken>) ->
                 let expr = Expression::FunctionArg(arg.clone(), None);
 
                 args.push(expr.clone());
-                body.push(ParsedToken::Expr(expr));
+                body.current.push(ParsedToken::Expr(expr));
             }
             None => pointer.error("Expected ')'".to_string()),
             _ => {}
@@ -88,7 +88,7 @@ fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut Vec<ParsedToken>) ->
 
 pub fn function(
     pointer: &mut ManuallyDrop<Pointer>,
-    body: &mut Vec<ParsedToken>,
+    body: &mut AvoidingBlock,
     isAsync: bool,
 ) -> Option<StatementToken> {
     if isAsync {
@@ -99,12 +99,15 @@ pub fn function(
     }
 
     if let Some(Token::Identifier(name, _)) = pointer.take("Identifier", true, true) {
-        let exists = findName(&body, name.clone());
+        let exists = findName(&body.current, name.clone());
         if exists.is_some() {
             pointer.error(format!("Identifier '{}' already declared", name));
         }
 
-        let mut funcBody: Vec<ParsedToken> = vec![];
+        let mut funcBody = AvoidingBlock {
+            current: vec![],
+            block: Box::new(Some(body.clone())),
+        };
 
         let args = readArgs(pointer, &mut funcBody);
 
@@ -116,7 +119,10 @@ pub fn function(
         readBlock(pointer, &mut funcBody);
 
         return Some(StatementToken::FunctionDeclaration(
-            name, args, funcBody, isAsync,
+            name,
+            args,
+            funcBody.current,
+            isAsync,
         ));
     }
 

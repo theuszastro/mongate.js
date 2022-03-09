@@ -1,29 +1,12 @@
 use std::mem::ManuallyDrop;
 
-use crate::tokenizer::Token;
-use crate::utils::pointer::Pointer;
+use crate::utils::{Expression, Pointer, Token};
 
 mod array;
 mod number;
 mod object;
 mod regexp;
 mod string;
-
-#[derive(Debug, Clone)]
-pub enum Expression {
-    Number(String),
-    Identifier(String),
-    String(String),
-    Boolean(String),
-    RegExp(String, String),
-    Array(Vec<Expression>),
-    Object(Vec<(String, Expression)>),
-    ParenBinary(Box<Expression>),
-    Binary(Box<Expression>, Token, Box<Expression>),
-    FunctionArg(String, Option<Box<Expression>>),
-    Null,
-    Undefined,
-}
 
 pub fn expression(pointer: &mut ManuallyDrop<Pointer>) -> Option<Expression> {
     let expr = match pointer.token.clone() {

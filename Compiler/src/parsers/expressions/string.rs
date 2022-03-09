@@ -1,9 +1,6 @@
 use std::mem::ManuallyDrop;
 
-use super::Expression;
-
-use crate::tokenizer::Token;
-use crate::utils::pointer::Pointer;
+use crate::utils::{Expression, Pointer, Token};
 
 pub fn string(pointer: &mut ManuallyDrop<Pointer>, symbol: String) -> Option<Expression> {
     if ["'", "\""].contains(&symbol.as_str()) {

@@ -1,4 +1,4 @@
-use crate::parsers::{Expression, ParsedToken, StatementToken};
+use crate::utils::{Expression, ParsedToken, StatementToken};
 
 fn expression(value: Expression) -> String {
     match value {
@@ -59,10 +59,10 @@ pub fn generate(token: ParsedToken, allCode: &mut String) {
         ParsedToken::Expr(expr) => allCode.push_str(&expression(expr)),
         ParsedToken::Statement(data) => match data {
             StatementToken::VariableDeclaration(name, expr) => {
-                allCode.push_str(&format!("let {} = {};\n", name, expression(expr)));
+                allCode.push_str(&format!("let {} = {};", name, expression(expr)));
             }
             StatementToken::ConstantDeclaration(name, expr) => {
-                allCode.push_str(&format!("const {} = {};\n", name, expression(expr)));
+                allCode.push_str(&format!("const {} = {};", name, expression(expr)));
             }
             StatementToken::FunctionDeclaration(name, args, body, isAsync) => {
                 allCode.push_str(&generate_function(name, args, body, isAsync));
@@ -90,7 +90,7 @@ fn generate_function(
         code.pop();
     }
 
-    code.push_str(") {\n");
+    code.push_str(") { ");
 
     for item in body {
         if let ParsedToken::Expr(expr) = item.clone() {
@@ -99,12 +99,10 @@ fn generate_function(
             }
         }
 
-        code.push('\t');
-
         generate(item, &mut code);
     }
 
-    code.push_str("}\n");
+    code.push_str("} ");
 
     code
 }

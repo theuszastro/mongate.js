@@ -1,18 +1,18 @@
+use crate::utils::AvoidingBlock;
 use std::mem::ManuallyDrop;
 
-use crate::parsers::{expression, Expression, ParsedToken, StatementToken};
-use crate::tokenizer::Token;
-use crate::utils::{findName, pointer::Pointer};
+use crate::parsers::expression;
+use crate::utils::{findName, Expression, Pointer, StatementToken, Token};
 
 pub fn variable(
     pointer: &mut ManuallyDrop<Pointer>,
-    body: &mut Vec<ParsedToken>,
+    body: &mut AvoidingBlock,
     isConstant: bool,
 ) -> Option<StatementToken> {
     pointer.take("Keyword", true, true);
 
     if let Some(Token::Identifier(name, _)) = pointer.take("Identifier", true, true) {
-        let exists = findName(&body, name.clone());
+        let exists = findName(&body.current, name.clone());
         if exists.is_some() {
             pointer.error(format!("Identifier '{}' already declared", name));
         }
