@@ -1,19 +1,24 @@
 # Nylock Lang
 ## Compiled to JavaScript
 
-#### Variaveis and constant: 
+#### Variaveis: 
 ```
-    let name = value;
+let name = value;
+let name;
+```
+
+#### Constants:
+```
     const name = value;
 ```
 
 #### Functions: 
 ```
-    fn calc(a, b) {
-        # ...
-    }
+fn calc(a, b) {
+    # ...
+}
 
-    async fn calc(a, b = 2) {
-        # ...
-    }
+async fn calc(a, b = 2) {
+    # ...
+}
 ```
