@@ -2,7 +2,7 @@ use std::mem::ManuallyDrop;
 
 use crate::utils::{Expression, HoistingBlock, Pointer, Token};
 
-use super::expression;
+use super::{binary::binary, logical::logical};
 
 pub fn number(
     pointer: &mut ManuallyDrop<Pointer>,
@@ -57,29 +57,15 @@ pub fn number(
         num.pop();
     }
 
-    if let Some(data) = pointer.previewNext(false, false) {
-        if let Some(Token::Operator(operator, _)) = pointer.token.clone() {
-            if data.tokenValue() == "/" && operator == "/" {
-                return Some(Expression::Number(num));
-            }
-        }
+    let expr = Expression::Number(num);
+
+    if let Some(binary) = binary(pointer, body, expr.clone()) {
+        return Some(binary);
     }
 
-    if let Some(operator) = pointer.take("Operator", true, true) {
-        if let Some(right) = expression(pointer, body) {
-            return Some(Expression::Binary(
-                Box::new(Expression::Number(num)),
-                operator,
-                Box::new(right),
-            ));
-        }
-
-        if let Some(value) = pointer.token.clone() {
-            pointer.error(format!("Unexpected '{}'", value.tokenValue()));
-        } else {
-            pointer.error("Expected a right value".to_string());
-        }
+    if let Some(logical) = logical(pointer, body, expr.clone()) {
+        return Some(logical);
     }
 
-    Some(Expression::Number(num))
+    Some(expr)
 }

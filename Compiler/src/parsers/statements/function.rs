@@ -95,6 +95,8 @@ pub fn function(
     body: &mut HoistingBlock,
     isAsync: bool,
 ) -> Option<StatementToken> {
+    pointer.take("Keyword", true, true);
+
     if isAsync {
         if pointer.take("Keyword", true, true).is_none() {
             pointer.error("Unexpected 'async'".to_string());

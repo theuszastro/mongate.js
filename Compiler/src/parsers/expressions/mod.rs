@@ -4,7 +4,9 @@ use std::mem::ManuallyDrop;
 use crate::utils::{Expression, Pointer, Token};
 
 mod array;
+mod binary;
 mod identifier;
+mod logical;
 mod number;
 mod object;
 mod regexp;
@@ -26,14 +28,16 @@ pub fn expression(
             Some(Expression::Null)
         }
         Some(Token::Identifier(_, _)) => identifier::identifier(pointer, body),
+        Some(Token::Operator(op, _)) if op == "/" => regexp::regexp(pointer),
+        Some(Token::Symbol(symbol, _)) => string::string(pointer, body, symbol),
+        Some(Token::Number(num, _)) => number::number(pointer, body, num),
         Some(Token::Brackets(bracket, _)) => match bracket.as_str() {
             "[" => array::array(pointer, body),
             "{" => object::object(pointer, body),
             "(" => {
                 pointer.take("Brackets", true, true);
 
-                let expr = expression(pointer, body);
-                if let Some(expr) = expr {
+                if let Some(expr) = expression(pointer, body) {
                     if pointer.take("Brackets", true, true).is_none() {
                         pointer.error("Expected ')'".to_string());
                     }
@@ -45,9 +49,6 @@ pub fn expression(
             }
             _ => None,
         },
-        Some(Token::Operator(op, _)) if op == "/" => regexp::regexp(pointer),
-        Some(Token::Symbol(symbol, _)) => string::string(pointer, symbol),
-        Some(Token::Number(num, _)) => number::number(pointer, body, num),
         _ => None,
     };
 

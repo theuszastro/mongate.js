@@ -1,8 +1,13 @@
 use std::mem::ManuallyDrop;
 
-use crate::utils::{Expression, Pointer, Token};
+use super::logical::logical;
+use crate::utils::{Expression, HoistingBlock, Pointer, Token};
 
-pub fn string(pointer: &mut ManuallyDrop<Pointer>, symbol: String) -> Option<Expression> {
+pub fn string(
+    pointer: &mut ManuallyDrop<Pointer>,
+    body: &mut HoistingBlock,
+    symbol: String,
+) -> Option<Expression> {
     if ["'", "\""].contains(&symbol.as_str()) {
         pointer.take("Symbol", false, false);
 
@@ -36,7 +41,13 @@ pub fn string(pointer: &mut ManuallyDrop<Pointer>, symbol: String) -> Option<Exp
             pointer.error(format!("Expected '{}'", symbol));
         }
 
-        return Some(Expression::String(string));
+        let expr = Expression::String(string);
+
+        if let Some(logical) = logical(pointer, body, expr.clone()) {
+            return Some(logical);
+        }
+
+        return Some(expr);
     }
 
     None

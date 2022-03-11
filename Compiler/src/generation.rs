@@ -38,8 +38,8 @@ fn expression(value: Expression) -> String {
 
             result
         }
-        Expression::Binary(l, op, r) => {
-            format!("{} {} {}", expression(*l), op.tokenValue(), expression(*r))
+        Expression::Binary(left, op, right) | Expression::Logical(left, op, right) => {
+            format!("{} {} {}", expression(*left), op, expression(*right))
         }
         Expression::ParenBinary(ex) => {
             format!("({})", expression(*ex))
@@ -66,6 +66,29 @@ pub fn generate(token: ParsedToken, allCode: &mut String) {
             }
             StatementToken::FunctionDeclaration(name, args, body, isAsync) => {
                 allCode.push_str(&generate_function(name, args, body, isAsync));
+            }
+            StatementToken::IfDeclaration(condition, body, elseBody) => {
+                let mut code = String::from("if(");
+
+                code.push_str(&expression(condition));
+                code.push_str(")");
+                code.push_str("{");
+
+                for item in body {
+                    generate(item, &mut code);
+                }
+                code.push_str("}");
+                if elseBody.len() >= 1 {
+                    code.push_str("else{");
+
+                    for item in elseBody {
+                        generate(item, &mut code);
+                    }
+
+                    code.push_str("}");
+                }
+
+                allCode.push_str(&code);
             }
             _ => {}
         },

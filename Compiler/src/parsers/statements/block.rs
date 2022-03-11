@@ -14,8 +14,6 @@ pub fn readBlock(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) 
             }
             _ => {
                 if let Some(stmt) = statements(pointer, body) {
-                    println!("{:?}", stmt);
-
                     body.current.push(ParsedToken::Statement(stmt));
 
                     continue;
@@ -24,8 +22,7 @@ pub fn readBlock(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) 
                 if let Some(expr) = expression(pointer, body) {
                     match expr.clone() {
                         Expression::Identifier(name) => {
-                            let exists = findBody(body.clone(), name.clone());
-                            if exists.is_none() {
+                            if findBody(body.clone(), name.clone()).is_none() {
                                 pointer.error(format!("Identifier '{}' not declared", name));
                             }
                         }

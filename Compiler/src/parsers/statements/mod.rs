@@ -3,6 +3,7 @@ use std::mem::ManuallyDrop;
 use crate::parsers::expression;
 use crate::utils::{Expression, HoistingBlock, Pointer, StatementToken, Token};
 
+mod _if;
 mod block;
 mod comment;
 mod function;
@@ -15,25 +16,21 @@ pub fn statements(
     body: &mut HoistingBlock,
 ) -> Option<StatementToken> {
     match pointer.token.clone() {
-        Some(Token::Keyword(keyword, _)) => {
-            pointer.take("Keyword", true, true);
+        Some(Token::Keyword(keyword, _)) => match keyword.as_str() {
+            "let" | "const" => variable::variable(pointer, body, keyword == "const"),
+            "fn" | "async" => function::function(pointer, body, keyword == "async"),
+            "if" => _if::_if(pointer, body),
+            "return" => {
+                pointer.take("Keyword", true, true);
 
-            match keyword.as_str() {
-                "let" | "const" => variable::variable(pointer, body, keyword == "const"),
-                "fn" | "async" => function::function(pointer, body, keyword == "async"),
-                "return" => {
-                    pointer.take("Keyword", true, true);
-
-                    let expr = expression(pointer, body);
-                    if let Some(expr) = expr {
-                        return Some(StatementToken::ReturnDeclaration(expr));
-                    }
-
-                    Some(StatementToken::ReturnDeclaration(Expression::Undefined))
+                if let Some(expr) = expression(pointer, body) {
+                    return Some(StatementToken::ReturnDeclaration(expr));
                 }
-                _ => None,
+
+                Some(StatementToken::ReturnDeclaration(Expression::Undefined))
             }
-        }
+            _ => None,
+        },
         Some(Token::Symbol(symbol, _)) if symbol == "#" => {
             pointer.take("Symbol", false, false);
 

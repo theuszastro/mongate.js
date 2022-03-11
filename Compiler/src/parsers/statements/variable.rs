@@ -18,11 +18,11 @@ pub fn variable(
         if let Some(Token::Punctuation(punc, _)) = pointer.take("Punctuation", true, true) {
             if punc == "=" {
                 if let Some(expr) = expression(pointer, body) {
-                    if isConstant {
-                        return Some(StatementToken::ConstantDeclaration(name, expr));
+                    return Some(if isConstant {
+                        StatementToken::ConstantDeclaration(name, expr)
                     } else {
-                        return Some(StatementToken::VariableDeclaration(name, expr));
-                    }
+                        StatementToken::VariableDeclaration(name, expr)
+                    });
                 }
 
                 pointer.error("Expected expression".to_string());

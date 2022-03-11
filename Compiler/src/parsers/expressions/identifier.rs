@@ -1,6 +1,6 @@
 use std::mem::ManuallyDrop;
 
-use crate::parsers::expression;
+use super::{binary::binary, logical::logical};
 use crate::utils::{findBody, Expression, HoistingBlock, Pointer, Token};
 
 pub fn identifier(
@@ -9,38 +9,30 @@ pub fn identifier(
 ) -> Option<Expression> {
     if let Some(Token::Identifier(value, _)) = pointer.take("Identifier", true, true) {
         if ["true", "false"].contains(&value.as_str()) {
-            return Some(Expression::Boolean(value));
+            let expr = Expression::Boolean(value);
+
+            if let Some(logical) = logical(pointer, body, expr.clone()) {
+                return Some(logical);
+            }
+
+            return Some(expr);
         }
 
         if let None = findBody(body.clone(), value.clone()) {
             pointer.error(format!("Identifier '{}' not declared", value));
         }
 
-        if let Some(data) = pointer.previewNext(false, false) {
-            if let Some(Token::Operator(operator, _)) = pointer.token.clone() {
-                if data.tokenValue() == "/" && operator == "/" {
-                    return Some(Expression::Identifier(value));
-                }
-            }
+        let expr = Expression::Identifier(value.clone());
+
+        if let Some(logic) = logical(pointer, body, expr.clone()) {
+            return Some(logic);
         }
 
-        if let Some(operator) = pointer.take("Operator", true, true) {
-            if let Some(right) = expression(pointer, body) {
-                return Some(Expression::Binary(
-                    Box::new(Expression::Identifier(value)),
-                    operator,
-                    Box::new(right),
-                ));
-            }
-
-            if let Some(value) = pointer.token.clone() {
-                pointer.error(format!("Unexpected '{}'", value.tokenValue()));
-            } else {
-                pointer.error("Expected a right value".to_string());
-            }
+        if let Some(binary) = binary(pointer, body, expr.clone()) {
+            return Some(binary);
         }
 
-        return Some(Expression::Identifier(value));
+        return Some(expr);
     }
 
     None

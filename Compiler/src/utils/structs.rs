@@ -38,7 +38,8 @@ pub enum Expression {
     Array(Vec<Expression>),
     Object(Vec<(String, Expression)>),
     ParenBinary(Box<Expression>),
-    Binary(Box<Expression>, Token, Box<Expression>),
+    Logical(Box<Expression>, String, Box<Expression>),
+    Binary(Box<Expression>, String, Box<Expression>),
     FunctionArg(String, Option<Box<Expression>>),
     Null,
     Undefined,
@@ -46,6 +47,7 @@ pub enum Expression {
 
 #[derive(Debug, Clone)]
 pub enum StatementToken {
+    IfDeclaration(Expression, Vec<ParsedToken>, Vec<ParsedToken>),
     CommentDeclaration(String),
     ReturnDeclaration(Expression),
     VariableDeclaration(String, Expression),
