@@ -29,8 +29,6 @@ impl Parser {
             match pointer.token.clone() {
                 None | Some(Token::EOF) => break,
                 _ => {
-                    let mut parsed: Option<ParsedToken> = None;
-
                     if let Some(Token::Punctuation(punc, _)) = pointer.token.clone() {
                         if punc == ";" {
                             pointer.take("Punctuation", true, true);
@@ -40,14 +38,19 @@ impl Parser {
                     }
 
                     if let Some(statement) = statements(&mut pointer, &mut self.body) {
-                        parsed = Some(ParsedToken::Statement(statement));
+                        let parsed = ParsedToken::Statement(statement);
+
+                        println!("{:?}", parsed);
+
+                        generate(parsed.clone(), &mut self.code);
+                        self.body.current.push(parsed);
+
+                        continue;
                     }
 
                     if let Some(expression) = expression(&mut pointer, &mut self.body) {
-                        parsed = Some(ParsedToken::Expr(expression));
-                    }
+                        let parsed = ParsedToken::Expr(expression);
 
-                    if let Some(parsed) = parsed {
                         generate(parsed.clone(), &mut self.code);
                         self.body.current.push(parsed);
 

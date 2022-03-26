@@ -1,4 +1,5 @@
 # Nylock Lang
+
 ## Compiled to JavaScript
 
 #### Comments:
@@ -7,7 +8,7 @@
 // ...
 ```
 
-#### Variaveis: 
+#### Variables: 
 ```
 let name = value;
 let name;

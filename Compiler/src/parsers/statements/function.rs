@@ -4,7 +4,7 @@ use super::block::readBlock;
 
 use crate::parsers::expression;
 use crate::utils::{
-    findName, Expression, HoistingBlock, ParsedToken, Pointer, StatementToken, Token,
+    findBody, Expression, HoistingBlock, ParsedToken, Pointer, StatementToken, Token,
 };
 
 fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Vec<Expression> {
@@ -104,7 +104,11 @@ pub fn function(
     }
 
     if let Some(Token::Identifier(name, _)) = pointer.take("Identifier", true, true) {
-        if findName(&body.current, name.clone()).is_some() {
+        if pointer.globalFunctions.contains(&name) {
+            pointer.error(format!("Identifier '{}' is a global method", name));
+        }
+
+        if findBody(body.clone(), name.clone()).is_some() {
             pointer.error(format!("Identifier '{}' already declared", name));
         }
 

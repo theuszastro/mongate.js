@@ -49,6 +49,16 @@ impl Tokenizer {
         self.letter = "EndFile".to_string();
     }
 
+    pub fn memorize(&self) -> (String, usize, usize) {
+        return (self.letter.clone(), self.line, self.cursor);
+    }
+
+    pub fn restore(&mut self, data: (String, usize, usize)) {
+        self.letter = data.0;
+        self.line = data.1;
+        self.cursor = data.2;
+    }
+
     pub fn context(&self) -> TokenContext {
         TokenContext {
             filename: self.filename.clone(),
@@ -192,10 +202,12 @@ impl Tokenizer {
             cursor: 0,
             line: 1,
             letter: lines[0 as usize].iter().nth(0).unwrap().to_string(),
-            keywords: Vec::from(["let", "const", "async", "fn", "return", "if", "else"])
-                .iter()
-                .map(|data| data.to_string())
-                .collect(),
+            keywords: Vec::from([
+                "let", "const", "async", "fn", "return", "if", "else", "import", "from", "export",
+            ])
+            .iter()
+            .map(|data| data.to_string())
+            .collect(),
         }
     }
 }

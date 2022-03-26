@@ -51,6 +51,25 @@ fn expression(value: Expression) -> String {
 
             format!("{}, ", name)
         }
+        Expression::FunctionCall(name, args) => {
+            let mut code = format!("{}(", name);
+
+            for item in args {
+                let result = expression(item.clone());
+
+                code.push_str(&result);
+                code.push_str(", ");
+            }
+
+            if code.ends_with(", ") {
+                code.pop();
+                code.pop();
+            }
+
+            code.push_str(")");
+
+            code
+        }
     }
 }
 
@@ -71,21 +90,14 @@ pub fn generate(token: ParsedToken, allCode: &mut String) {
                 let mut code = String::from("if(");
 
                 code.push_str(&expression(condition));
-                code.push_str(")");
-                code.push_str("{");
+                code.push_str(") {\n");
 
-                for item in body {
-                    generate(item, &mut code);
-                }
-                code.push_str("}");
+                generateBody(body, &mut code);
+
                 if elseBody.len() >= 1 {
-                    code.push_str("else{");
+                    code.push_str(" else {\n");
 
-                    for item in elseBody {
-                        generate(item, &mut code);
-                    }
-
-                    code.push_str("}");
+                    generateBody(elseBody, &mut code);
                 }
 
                 allCode.push_str(&code);
@@ -93,6 +105,20 @@ pub fn generate(token: ParsedToken, allCode: &mut String) {
             _ => {}
         },
     }
+}
+
+fn generateBody(body: Vec<ParsedToken>, allCode: &mut String) {
+    for item in body {
+        generate(item, allCode);
+
+        allCode.push_str("\n");
+    }
+
+    if allCode.ends_with("\n") {
+        allCode.pop();
+    }
+
+    allCode.push_str("}");
 }
 
 fn generate_function(
@@ -113,17 +139,9 @@ fn generate_function(
         code.pop();
     }
 
-    code.push_str(") {");
+    code.push_str(") {\n");
 
-    for item in body {
-        if let ParsedToken::Expr(Expression::FunctionArg(_, _)) = item.clone() {
-            continue;
-        }
-
-        generate(item, &mut code);
-    }
-
-    code.push_str("}");
+    generateBody(body, &mut code);
 
     code
 }

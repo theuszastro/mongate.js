@@ -1,7 +1,7 @@
 mod pointer;
 mod structs;
 
-pub use pointer::Pointer;
+pub use pointer::{ImportedModule, Pointer};
 pub use structs::{Expression, HoistingBlock, ParsedToken, StatementToken, Token, TokenContext};
 
 pub fn findBody(body: HoistingBlock, searchName: String) -> Option<ParsedToken> {

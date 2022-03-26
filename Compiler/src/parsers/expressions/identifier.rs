@@ -1,13 +1,19 @@
 use std::mem::ManuallyDrop;
 
-use super::{binary::binary, logical::logical};
+use super::{binary::binary, functionCall::functionCall, logical::logical};
 use crate::utils::{findBody, Expression, HoistingBlock, Pointer, Token};
 
 pub fn identifier(
     pointer: &mut ManuallyDrop<Pointer>,
     body: &mut HoistingBlock,
 ) -> Option<Expression> {
-    if let Some(Token::Identifier(value, _)) = pointer.take("Identifier", true, true) {
+    if let Some(Token::Identifier(value, _)) = pointer.token.clone() {
+        if let Some(call) = functionCall(pointer, body) {
+            return Some(call);
+        }
+
+        pointer.take("Identifier", true, true);
+
         if ["true", "false"].contains(&value.as_str()) {
             let expr = Expression::Boolean(value);
 

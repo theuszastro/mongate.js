@@ -26,7 +26,7 @@ impl SyntaxError {
             reason,
             filename,
             lineNumber: line,
-            lineError: SyntaxError::getLine(lines.clone(), line),
+            lineError: SyntaxError::getLine(lines.clone(), (line - 1) as usize),
             lines: SyntaxError::getLines(lines.clone(), line as i64 - 1),
         };
 

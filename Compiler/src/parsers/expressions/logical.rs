@@ -35,7 +35,13 @@ pub fn logical(
         }
     }
 
-    if let Some(Token::Punctuation(punc, _)) = pointer.take("Punctuation", true, true) {
+    if let Some(Token::Punctuation(punc, _)) = pointer.token.clone() {
+        if !["=", "<", ">"].contains(&punc.as_str()) {
+            return None;
+        }
+
+        pointer.take("Punctuation", true, true);
+
         match pointer.token.clone() {
             Some(Token::Punctuation(punc2, _)) => {
                 let operator = format!("{}{}", punc, punc2);
@@ -77,9 +83,9 @@ pub fn logical(
                     }
                 }
 
-                if punc != ";" {
-                    pointer.error(format!("Unexpected '{}'", punc));
-                }
+                // if punc != ";" {
+                //     pointer.error(format!("Unexpected '{}'", punc));
+                // }
             }
         }
     }

@@ -11,6 +11,10 @@ pub fn variable(
     pointer.take("Keyword", true, true);
 
     if let Some(Token::Identifier(name, _)) = pointer.take("Identifier", true, true) {
+        if pointer.globalFunctions.contains(&name) {
+            pointer.error(format!("Identifier '{}' is a global method", name));
+        }
+
         if findName(&body.current, name.clone()).is_some() {
             pointer.error(format!("Identifier '{}' already declared", name));
         }

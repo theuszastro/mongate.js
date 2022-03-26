@@ -41,6 +41,7 @@ pub enum Expression {
     Logical(Box<Expression>, String, Box<Expression>),
     Binary(Box<Expression>, String, Box<Expression>),
     FunctionArg(String, Option<Box<Expression>>),
+    FunctionCall(String, Vec<Expression>),
     Null,
     Undefined,
 }

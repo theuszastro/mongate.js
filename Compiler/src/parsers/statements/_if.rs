@@ -1,7 +1,7 @@
 use std::mem::ManuallyDrop;
 
 use super::{expression, readBlock};
-use crate::utils::{HoistingBlock, ParsedToken, Pointer, StatementToken, Token};
+use crate::utils::{Expression, HoistingBlock, ParsedToken, Pointer, StatementToken, Token};
 
 fn _else(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Vec<ParsedToken> {
     pointer.take("Keyword", true, true);
@@ -27,6 +27,15 @@ fn _else(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Vec<P
     }
 }
 
+fn verifyExprs(pointer: &mut ManuallyDrop<Pointer>, expr: Expression) {
+    match expr {
+        Expression::Boolean(..) => {}
+        Expression::Logical(..) => {}
+        Expression::ParenBinary(expr) => verifyExprs(pointer, *expr.clone()),
+        _ => pointer.error("Invalid Condition".to_string()),
+    }
+}
+
 pub fn _if(
     pointer: &mut ManuallyDrop<Pointer>,
     body: &mut HoistingBlock,
@@ -34,6 +43,10 @@ pub fn _if(
     pointer.take("Keyword", true, true);
 
     if let Some(expr) = expression(pointer, body) {
+        println!("{:?}", expr);
+
+        verifyExprs(pointer, expr.clone());
+
         match pointer.token.clone() {
             Some(Token::Brackets(brac, _)) if brac == "{" => {
                 pointer.take("Brackets", true, true);

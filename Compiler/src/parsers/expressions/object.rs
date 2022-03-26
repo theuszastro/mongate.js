@@ -9,6 +9,8 @@ pub fn object(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> 
 
     let mut values: Vec<(String, Expression)> = vec![];
 
+    let mem = pointer.memorize();
+
     loop {
         match pointer.token.clone() {
             Some(Token::Brackets(bra, _)) if bra == "}" => break,
@@ -19,7 +21,9 @@ pub fn object(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> 
                 if identifer.is_none() {
                     let keyString = expression(pointer, body);
                     if keyString.is_none() {
-                        pointer.error("Expected Identifier".to_string());
+                        pointer.restore(mem);
+
+                        return None;
                     }
 
                     if let Some(Expression::String(value)) = keyString {
