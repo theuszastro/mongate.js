@@ -1,9 +1,9 @@
 use std::mem::ManuallyDrop;
 
 use super::expression;
-use crate::utils::{
-    findBody, Expression, HoistingBlock, ParsedToken, Pointer, StatementToken, Token,
-};
+
+use crate::utils::{findBody, findGlobalFunc, findImports, formatFunctionName};
+use crate::utils::{Expression, HoistingBlock, Pointer, Token};
 
 pub fn functionCall(
     pointer: &mut ManuallyDrop<Pointer>,
@@ -11,24 +11,11 @@ pub fn functionCall(
 ) -> Option<Expression> {
     match pointer.token.clone() {
         Some(Token::Identifier(name, _)) => {
-            let next = pointer.previewNext(false, false);
-            let nextSkipping = pointer.previewNext(true, true);
+            let next = pointer.previewNext(true, true);
 
             if let Some(next) = next {
-                if let Some(nextSki) = nextSkipping {
-                    if next.tokenType() != "Punctuation" || nextSki.tokenType() != "Brackets" {
-                        if next.tokenValue() != "!" && nextSki.tokenValue() != "(" {
-                            if nextSki.tokenValue() != "!" {
-                                return None;
-                            }
-
-                            pointer.error(format!(
-                                "Unexpected token '{}' after identifier '{}'",
-                                next.tokenValue(),
-                                name
-                            ));
-                        }
-                    }
+                if next.tokenType() != "Brackets" || next.tokenValue() != "(" {
+                    return None;
                 }
             }
 
@@ -58,59 +45,24 @@ pub fn functionCall(
 
                     if let Some(Token::Brackets(brack, _)) = pointer.take("Brackets", true, true) {
                         if brack == ")" {
-                            if findBody(body.clone(), name.clone()).is_none()
-                                || !pointer.globalFunctions.contains(&name)
+                            if findImports(&pointer.imports, name.clone()) {
+                                return Some(Expression::FunctionCall(name, args));
+                            }
+
+                            let globalFun = findGlobalFunc(&pointer.globalFunctions, name.clone());
+                            if findBody(body.clone(), name.clone()).is_none() && globalFun.is_none()
                             {
                                 pointer.error(format!("Function '{}' not declared", name));
                             }
 
-                            return Some(Expression::FunctionCall(name, args));
+                            return Some(Expression::FunctionCall(
+                                formatFunctionName(name, globalFun),
+                                args,
+                            ));
                         }
                     }
 
                     pointer.error("Expected ')'".to_string());
-
-                    None
-                }
-                Some(Token::Punctuation(_, _)) => {
-                    pointer.take("Punctuation", true, true);
-
-                    loop {
-                        
-
-                        if let Some(expr) = expression(pointer, body) {
-                            args.push(expr);
-
-                            match pointer.token.clone() {
-                                Some(Token::Punctuation(punctuation, _)) if punctuation == "," => {
-                                    pointer.take("Punctuation", true, true);
-                                }
-                                _ => break,
-                            }
-
-                            continue;
-                        }
-
-                        break;
-                    }
-
-                    if findBody(body.clone(), name.clone()).is_none() {
-                        pointer.error(format!("Function '{}' not declared", name));
-                    }
-
-                    if pointer.globalFunctions.contains(&name) {
-                        return Some(Expression::FunctionCall(name, args));
-                    }
-
-                    if let Some(data) = findBody(body.clone(), name.clone()) {
-                        if let ParsedToken::Statement(StatementToken::FunctionDeclaration(..)) =
-                            data
-                        {
-                            return Some(Expression::FunctionCall(name, args));
-                        }
-
-                        pointer.error(format!("Identifier '{}' is not a function", name));
-                    }
 
                     None
                 }

@@ -35,5 +35,7 @@ fn main() {
         filename: filename.to_string(),
     });
 
-    compiler.run();
+    let (code, _) = compiler.run();
+
+    println!("{}", code);
 }

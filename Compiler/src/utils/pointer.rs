@@ -1,25 +1,39 @@
 use crate::errors::SyntaxError;
 use crate::tokenizer::Tokenizer;
 
-use super::{ParsedToken, Token};
+use super::Token;
 
 #[derive(Debug, Clone)]
 pub struct ImportedModule {
-    pub name: String,
-    pub body: Vec<ParsedToken>,
+    pub path: String,
+    pub code: String,
+    pub names: Vec<Token>,
+    pub exports: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Pointer {
     pub tokenizer: Tokenizer,
     pub token: Option<Token>,
-    pub globalFunctions: Vec<String>,
+    pub globalFunctions: Vec<GlobalFunc>,
     pub imports: Vec<ImportedModule>,
 }
 
 pub struct Memorized {
     pub tokenizer: (String, usize, usize),
     pub token: Option<Token>,
+}
+
+#[derive(Debug, Clone)]
+pub struct GlobalFunc {
+    pub name: String,
+    pub replace: String,
+}
+
+impl GlobalFunc {
+    pub fn new(name: String, replace: String) -> Self {
+        Self { name, replace }
+    }
 }
 
 impl Pointer {
@@ -29,11 +43,11 @@ impl Pointer {
             tokenizer,
             imports: vec![],
             globalFunctions: vec![
-                "log".to_string(),
-                "warn".to_string(),
-                "error".to_string(),
-                "info".to_string(),
-                "require".to_string(),
+                GlobalFunc::new("log".to_string(), "console.log".to_string()),
+                GlobalFunc::new("warn".to_string(), "console.warn".to_string()),
+                GlobalFunc::new("error".to_string(), "console.error".to_string()),
+                GlobalFunc::new("info".to_string(), "console.info".to_string()),
+                GlobalFunc::new("require".to_string(), "".to_string()),
             ],
         }
     }

@@ -1,7 +1,8 @@
 use std::mem::ManuallyDrop;
 
 use crate::parsers::expression;
-use crate::utils::{findName, Expression, HoistingBlock, Pointer, StatementToken, Token};
+use crate::utils::{findGlobalFunc, findImports, findName};
+use crate::utils::{Expression, HoistingBlock, Pointer, StatementToken, Token};
 
 pub fn variable(
     pointer: &mut ManuallyDrop<Pointer>,
@@ -11,11 +12,13 @@ pub fn variable(
     pointer.take("Keyword", true, true);
 
     if let Some(Token::Identifier(name, _)) = pointer.take("Identifier", true, true) {
-        if pointer.globalFunctions.contains(&name) {
+        if findGlobalFunc(&pointer.globalFunctions, name.clone()).is_some() {
             pointer.error(format!("Identifier '{}' is a global method", name));
         }
 
-        if findName(&body.current, name.clone()).is_some() {
+        if findName(&body.current, name.clone()).is_some()
+            || findImports(&pointer.imports, name.clone())
+        {
             pointer.error(format!("Identifier '{}' already declared", name));
         }
 

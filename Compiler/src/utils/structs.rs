@@ -53,6 +53,8 @@ pub enum StatementToken {
     ReturnDeclaration(Expression),
     VariableDeclaration(String, Expression),
     ConstantDeclaration(String, Expression),
+    ExportDeclaration(Box<StatementToken>),
+    ImportDeclaration(Vec<Token>, String),
     FunctionDeclaration(String, Vec<Expression>, Vec<ParsedToken>, bool),
 }
 

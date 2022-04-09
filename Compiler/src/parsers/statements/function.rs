@@ -3,9 +3,9 @@ use std::mem::ManuallyDrop;
 use super::block::readBlock;
 
 use crate::parsers::expression;
-use crate::utils::{
-    findBody, Expression, HoistingBlock, ParsedToken, Pointer, StatementToken, Token,
-};
+
+use crate::utils::{findBody, findGlobalFunc, findImports};
+use crate::utils::{Expression, HoistingBlock, ParsedToken, Pointer, StatementToken, Token};
 
 fn readArgs(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Vec<Expression> {
     let mut args: Vec<Expression> = vec![];
@@ -104,11 +104,13 @@ pub fn function(
     }
 
     if let Some(Token::Identifier(name, _)) = pointer.take("Identifier", true, true) {
-        if pointer.globalFunctions.contains(&name) {
+        if findGlobalFunc(&pointer.globalFunctions, name.clone()).is_some() {
             pointer.error(format!("Identifier '{}' is a global method", name));
         }
 
-        if findBody(body.clone(), name.clone()).is_some() {
+        if findBody(body.clone(), name.clone()).is_some()
+            || findImports(&pointer.imports, name.clone())
+        {
             pointer.error(format!("Identifier '{}' already declared", name));
         }
 

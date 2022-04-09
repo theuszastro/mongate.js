@@ -1,4 +1,4 @@
-use crate::utils::{Expression, ParsedToken, StatementToken};
+use crate::utils::{Expression, ParsedToken, ParsedToken::Expr, StatementToken, Token};
 
 fn expression(value: Expression) -> String {
     match value {
@@ -77,6 +77,29 @@ pub fn generate(token: ParsedToken, allCode: &mut String) {
     match token {
         ParsedToken::Expr(expr) => allCode.push_str(&expression(expr)),
         ParsedToken::Statement(data) => match data {
+            StatementToken::ExportDeclaration(value) => {
+                allCode.push_str("export ");
+
+                generate(ParsedToken::Statement(*value), allCode);
+            }
+            StatementToken::ImportDeclaration(names, from) => {
+                allCode.push_str("import {");
+
+                if names.len() >= 1 {
+                    for importedName in names.iter() {
+                        if let Token::Identifier(name, ..) = importedName {
+                            allCode.push_str(&format!("{}, ", name));
+                        }
+                    }
+                    if allCode.ends_with(", ") {
+                        allCode.pop();
+                        allCode.pop();
+                    }
+                }
+
+                allCode.push_str("} ");
+                allCode.push_str(&format!("from '{}';", from));
+            }
             StatementToken::ReturnDeclaration(expr) => {
                 allCode.push_str(&format!("return {}", expression(expr)));
             }
@@ -118,6 +141,10 @@ fn generateBody(body: Vec<ParsedToken>, allCode: &mut String) {
     }
 
     for item in body {
+        if let Expr(Expression::FunctionArg(..)) = item {
+            continue;
+        }
+
         generate(item, allCode);
     }
 

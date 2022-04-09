@@ -6,7 +6,9 @@ use crate::utils::{Expression, HoistingBlock, Pointer, StatementToken, Token};
 mod _if;
 mod block;
 mod comment;
+mod export;
 mod function;
+mod import;
 mod variable;
 
 pub use block::readBlock;
@@ -20,6 +22,8 @@ pub fn statements(
             "let" | "const" => variable::variable(pointer, body, keyword == "const"),
             "fn" | "async" => function::function(pointer, body, keyword == "async"),
             "if" => _if::_if(pointer, body),
+            "export" => export::export(pointer, body),
+            "import" => import::import(pointer, body),
             "return" => {
                 pointer.take("Keyword", true, true);
 

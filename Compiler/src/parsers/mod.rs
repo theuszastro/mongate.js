@@ -12,13 +12,13 @@ pub use statements::{readBlock, statements};
 
 #[derive(Debug)]
 pub struct Parser {
-    pointer: Pointer,
+    pub pointer: Pointer,
     code: String,
     body: HoistingBlock,
 }
 
 impl Parser {
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> (String, Vec<ParsedToken>) {
         let mut pointer = ManuallyDrop::new(self.pointer.clone());
 
         if pointer.token.is_none() {
@@ -62,9 +62,7 @@ impl Parser {
             }
         }
 
-        println!("{}", self.code);
-
-        drop(pointer);
+        (self.code.clone(), self.body.current.clone())
     }
 
     pub fn new(tokenizer: Tokenizer) -> Self {

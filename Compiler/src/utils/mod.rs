@@ -1,8 +1,51 @@
+mod path;
 mod pointer;
 mod structs;
 
-pub use pointer::{ImportedModule, Pointer};
+pub use path::{existsFile, getPath, verifyImport};
+pub use pointer::{GlobalFunc, ImportedModule, Pointer};
 pub use structs::{Expression, HoistingBlock, ParsedToken, StatementToken, Token, TokenContext};
+
+pub fn formatFunctionName(name: String, globalFun: Option<GlobalFunc>) -> String {
+    if let Some(GlobalFunc {
+        name: funcName,
+        replace,
+        ..
+    }) = globalFun
+    {
+        if replace.is_empty() {
+            return funcName;
+        }
+
+        return replace;
+    }
+
+    return name;
+}
+
+pub fn findGlobalFunc(functions: &Vec<GlobalFunc>, name: String) -> Option<GlobalFunc> {
+    for func in functions {
+        if func.name == name {
+            return Some(func.clone());
+        }
+    }
+
+    return None;
+}
+
+pub fn findImports(imports: &Vec<ImportedModule>, name: String) -> bool {
+    for import in imports {
+        for iName in &import.names {
+            if let Token::Identifier(tName, ..) = iName {
+                if tName.clone() == name {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
 
 pub fn findBody(body: HoistingBlock, searchName: String) -> Option<ParsedToken> {
     let HoistingBlock { block, current } = body;
