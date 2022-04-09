@@ -17,6 +17,11 @@ pub struct Pointer {
     pub imports: Vec<ImportedModule>,
 }
 
+pub struct Memorized {
+    pub tokenizer: (String, usize, usize),
+    pub token: Option<Token>,
+}
+
 impl Pointer {
     pub fn new(tokenizer: Tokenizer) -> Self {
         Self {
@@ -33,12 +38,16 @@ impl Pointer {
         }
     }
 
-    pub fn memorize(&mut self) -> (String, usize, usize) {
-        return self.tokenizer.memorize();
+    pub fn memorize(&mut self) -> Memorized {
+        return Memorized {
+            tokenizer: self.tokenizer.memorize(),
+            token: self.token.clone(),
+        };
     }
 
-    pub fn restore(&mut self, data: (String, usize, usize)) {
-        self.tokenizer.restore(data);
+    pub fn restore(&mut self, data: Memorized) {
+        self.tokenizer.restore(data.tokenizer);
+        self.token = data.token;
     }
 
     pub fn error(&mut self, reason: String) {

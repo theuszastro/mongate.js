@@ -77,6 +77,9 @@ pub fn generate(token: ParsedToken, allCode: &mut String) {
     match token {
         ParsedToken::Expr(expr) => allCode.push_str(&expression(expr)),
         ParsedToken::Statement(data) => match data {
+            StatementToken::ReturnDeclaration(expr) => {
+                allCode.push_str(&format!("return {}", expression(expr)));
+            }
             StatementToken::VariableDeclaration(name, expr) => {
                 allCode.push_str(&format!("let {} = {};", name, expression(expr)));
             }
@@ -90,12 +93,12 @@ pub fn generate(token: ParsedToken, allCode: &mut String) {
                 let mut code = String::from("if(");
 
                 code.push_str(&expression(condition));
-                code.push_str(") {\n");
+                code.push_str(") {");
 
                 generateBody(body, &mut code);
 
                 if elseBody.len() >= 1 {
-                    code.push_str(" else {\n");
+                    code.push_str(" else {");
 
                     generateBody(elseBody, &mut code);
                 }
@@ -108,14 +111,14 @@ pub fn generate(token: ParsedToken, allCode: &mut String) {
 }
 
 fn generateBody(body: Vec<ParsedToken>, allCode: &mut String) {
-    for item in body {
-        generate(item, allCode);
+    if body.len() < 1 {
+        allCode.push_str("}");
 
-        allCode.push_str("\n");
+        return;
     }
 
-    if allCode.ends_with("\n") {
-        allCode.pop();
+    for item in body {
+        generate(item, allCode);
     }
 
     allCode.push_str("}");
@@ -138,8 +141,7 @@ fn generate_function(
         code.pop();
         code.pop();
     }
-
-    code.push_str(") {\n");
+    code.push_str(") {");
 
     generateBody(body, &mut code);
 

@@ -5,11 +5,11 @@ use super::expression;
 use crate::utils::{Expression, HoistingBlock, Pointer, Token};
 
 pub fn object(pointer: &mut ManuallyDrop<Pointer>, body: &mut HoistingBlock) -> Option<Expression> {
+    let mem = pointer.memorize();
+
     pointer.take("Brackets", true, true);
 
     let mut values: Vec<(String, Expression)> = vec![];
-
-    let mem = pointer.memorize();
 
     loop {
         match pointer.token.clone() {

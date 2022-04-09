@@ -76,6 +76,8 @@ pub fn functionCall(
                     pointer.take("Punctuation", true, true);
 
                     loop {
+                        
+
                         if let Some(expr) = expression(pointer, body) {
                             args.push(expr);
 
@@ -88,6 +90,7 @@ pub fn functionCall(
 
                             continue;
                         }
+
                         break;
                     }
 

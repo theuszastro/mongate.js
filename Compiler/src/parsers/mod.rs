@@ -40,8 +40,6 @@ impl Parser {
                     if let Some(statement) = statements(&mut pointer, &mut self.body) {
                         let parsed = ParsedToken::Statement(statement);
 
-                        println!("{:?}", parsed);
-
                         generate(parsed.clone(), &mut self.code);
                         self.body.current.push(parsed);
 
