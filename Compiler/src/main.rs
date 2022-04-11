@@ -1,6 +1,9 @@
 #![allow(non_snake_case)]
 
-use std::fs;
+use std::env::args;
+use std::fs::read_to_string;
+use std::path::PathBuf;
+use std::process;
 
 mod compiler;
 mod errors;
@@ -12,30 +15,49 @@ mod utils;
 use crate::compiler::{Compiler, CompilerConfig};
 
 fn main() {
-    let args: Vec<String> = std::env::args().collect();
+    let mut filename = String::new();
+    let mut isNode = true;
+    let mut es6 = false;
 
-    if args.get(1).is_none() {
-        println!("Usage: {} <file>", args[0]);
+    for arg in args().collect::<Vec<String>>() {
+        if arg.ends_with(".nylock") {
+            if filename.is_empty() {
+                filename = arg.clone();
+            }
 
-        std::process::exit(1);
+            continue;
+        }
+
+        match arg.as_str() {
+            "--react" => isNode = false,
+            "--es6" => es6 = true,
+            _ => {}
+        }
     }
 
-    let filename = args[1].clone();
-    if !filename.ends_with(".nylock") {
-        println!("{} is not supported", filename);
+    if filename.is_empty() {
+        println!("Usage: ./Compiler <file>");
 
-        std::process::exit(1);
+        process::exit(1);
     }
 
-    let content = fs::read_to_string(filename.clone())
-        .expect(format!("Failed to read file {}", filename.clone()).as_str());
+    let path = PathBuf::from(filename.clone());
+    if path.exists() {
+        let content = read_to_string(path).unwrap();
 
-    let mut compiler = Compiler::new(CompilerConfig {
-        content,
-        filename: filename.to_string(),
-    });
+        let mut compiler = Compiler::new(CompilerConfig {
+            isNode,
+            es6,
+            content,
+            filename: filename.clone(),
+        });
 
-    let (code, _) = compiler.run();
+        let (code, _, _) = compiler.run();
 
-    println!("{}", code);
+        println!("{}", code);
+
+        return;
+    }
+
+    println!("{} does not exist", filename);
 }

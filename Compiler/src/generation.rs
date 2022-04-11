@@ -1,4 +1,7 @@
-use crate::utils::{Expression, ParsedToken, ParsedToken::Expr, StatementToken, Token};
+use std::mem::ManuallyDrop;
+
+use crate::utils::isLibrary;
+use crate::utils::{Expression, ParsedToken, ParsedToken::Expr, Pointer, StatementToken, Token};
 
 fn expression(value: Expression) -> String {
     match value {
@@ -73,69 +76,92 @@ fn expression(value: Expression) -> String {
     }
 }
 
-pub fn generate(token: ParsedToken, allCode: &mut String) {
+pub fn generate(pointer: &mut ManuallyDrop<Pointer>, token: ParsedToken) {
     match token {
-        ParsedToken::Expr(expr) => allCode.push_str(&expression(expr)),
+        ParsedToken::Expr(expr) => pointer.code.push_str(&expression(expr)),
         ParsedToken::Statement(data) => match data {
-            StatementToken::ExportDeclaration(value) => {
-                allCode.push_str("export ");
+            StatementToken::ExportDeclaration(value, isDefault) => {
+                if !pointer.isNode {
+                    pointer.code.push_str("export ");
 
-                generate(ParsedToken::Statement(*value), allCode);
+                    if isDefault {
+                        pointer.code.push_str("default ");
+                    }
+                }
+
+                generate(pointer, *value);
             }
             StatementToken::ImportDeclaration(names, from) => {
-                allCode.push_str("import {");
+                if pointer.isNode && !isLibrary(from.clone()) {
+                    return;
+                }
+
+                if pointer.es6 {
+                    pointer.code.push_str("import {");
+                } else {
+                    pointer.code.push_str("const {");
+                }
 
                 if names.len() >= 1 {
                     for importedName in names.iter() {
                         if let Token::Identifier(name, ..) = importedName {
-                            allCode.push_str(&format!("{}, ", name));
+                            pointer.code.push_str(&format!("{}, ", name));
                         }
                     }
-                    if allCode.ends_with(", ") {
-                        allCode.pop();
-                        allCode.pop();
+                    if pointer.code.ends_with(", ") {
+                        pointer.code.pop();
+                        pointer.code.pop();
                     }
                 }
 
-                allCode.push_str("} ");
-                allCode.push_str(&format!("from '{}';", from));
+                pointer.code.push_str("} ");
+
+                if pointer.es6 {
+                    pointer.code.push_str(&format!("from '{}';", from));
+                } else {
+                    pointer.code.push_str(&format!("= require('{}');", from));
+                }
             }
             StatementToken::ReturnDeclaration(expr) => {
-                allCode.push_str(&format!("return {}", expression(expr)));
+                pointer
+                    .code
+                    .push_str(&format!("return {}", expression(expr)));
             }
             StatementToken::VariableDeclaration(name, expr) => {
-                allCode.push_str(&format!("let {} = {};", name, expression(expr)));
+                pointer
+                    .code
+                    .push_str(&format!("let {} = {};", name, expression(expr)));
             }
             StatementToken::ConstantDeclaration(name, expr) => {
-                allCode.push_str(&format!("const {} = {};", name, expression(expr)));
+                pointer
+                    .code
+                    .push_str(&format!("const {} = {};", name, expression(expr)));
             }
             StatementToken::FunctionDeclaration(name, args, body, isAsync) => {
-                allCode.push_str(&generate_function(name, args, body, isAsync));
+                generate_function(pointer, name, args, body, isAsync);
             }
             StatementToken::IfDeclaration(condition, body, elseBody) => {
-                let mut code = String::from("if(");
+                pointer.code.push_str("if(");
 
-                code.push_str(&expression(condition));
-                code.push_str(") {");
+                pointer.code.push_str(&expression(condition));
+                pointer.code.push_str(") {");
 
-                generateBody(body, &mut code);
+                generateBody(pointer, body);
 
                 if elseBody.len() >= 1 {
-                    code.push_str(" else {");
+                    pointer.code.push_str(" else {");
 
-                    generateBody(elseBody, &mut code);
+                    generateBody(pointer, elseBody);
                 }
-
-                allCode.push_str(&code);
             }
             _ => {}
         },
     }
 }
 
-fn generateBody(body: Vec<ParsedToken>, allCode: &mut String) {
+fn generateBody(pointer: &mut ManuallyDrop<Pointer>, body: Vec<ParsedToken>) {
     if body.len() < 1 {
-        allCode.push_str("}");
+        pointer.code.push_str("}");
 
         return;
     }
@@ -145,32 +171,31 @@ fn generateBody(body: Vec<ParsedToken>, allCode: &mut String) {
             continue;
         }
 
-        generate(item, allCode);
+        generate(pointer, item);
     }
 
-    allCode.push_str("}");
+    pointer.code.push_str("}");
 }
 
 fn generate_function(
+    pointer: &mut ManuallyDrop<Pointer>,
     name: String,
     args: Vec<Expression>,
     body: Vec<ParsedToken>,
     isAsync: bool,
-) -> String {
-    let mut code = String::from(if isAsync { "async " } else { "" });
+) {
+    pointer.code.push_str(if isAsync { "async " } else { "" });
 
-    code.push_str(&format!("function {}(", name));
+    pointer.code.push_str(&format!("function {}(", name));
     args.iter()
         .map(|x| expression(x.clone()))
-        .for_each(|x| code.push_str(&x));
+        .for_each(|x| pointer.code.push_str(&x));
 
-    if code.ends_with(", ") {
-        code.pop();
-        code.pop();
+    if pointer.code.ends_with(", ") {
+        pointer.code.pop();
+        pointer.code.pop();
     }
-    code.push_str(") {");
+    pointer.code.push_str(") {");
 
-    generateBody(body, &mut code);
-
-    code
+    generateBody(pointer, body);
 }

@@ -1,14 +1,22 @@
 use crate::errors::SyntaxError;
 use crate::tokenizer::Tokenizer;
 
-use super::Token;
+use super::{ParsedToken, Token};
+
+#[derive(Debug, Clone)]
+pub struct ExportedModule {
+    pub isDefault: bool,
+    pub token: ParsedToken,
+}
 
 #[derive(Debug, Clone)]
 pub struct ImportedModule {
     pub path: String,
     pub code: String,
+    pub imports: Box<Vec<ImportedModule>>,
     pub names: Vec<Token>,
     pub exports: Vec<String>,
+    pub isLibrary: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -17,6 +25,11 @@ pub struct Pointer {
     pub token: Option<Token>,
     pub globalFunctions: Vec<GlobalFunc>,
     pub imports: Vec<ImportedModule>,
+    pub exports: Vec<ExportedModule>,
+
+    pub isNode: bool,
+    pub es6: bool,
+    pub code: String,
 }
 
 pub struct Memorized {
@@ -37,11 +50,15 @@ impl GlobalFunc {
 }
 
 impl Pointer {
-    pub fn new(tokenizer: Tokenizer) -> Self {
+    pub fn new(tokenizer: Tokenizer, isNode: bool, es6: bool) -> Self {
         Self {
             token: None,
+            code: String::new(),
+            isNode,
+            es6,
             tokenizer,
             imports: vec![],
+            exports: vec![],
             globalFunctions: vec![
                 GlobalFunc::new("log".to_string(), "console.log".to_string()),
                 GlobalFunc::new("warn".to_string(), "console.warn".to_string()),

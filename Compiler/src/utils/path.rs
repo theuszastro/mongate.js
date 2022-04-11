@@ -2,8 +2,12 @@ use std::env::current_dir;
 use std::mem::ManuallyDrop;
 use std::path::PathBuf;
 
-use crate::utils::{ImportedModule, ParsedToken, Pointer, StatementToken, Token};
+use crate::utils::{Expression, ImportedModule, ParsedToken, Pointer, StatementToken, Token};
 use crate::{Compiler, CompilerConfig};
+
+pub fn isLibrary(path: String) -> bool {
+    return !(path.starts_with("./") | path.starts_with("../"));
+}
 
 pub fn getPath(filePath: String) -> String {
     let mut executable = current_dir().unwrap().to_str().unwrap().to_string();
@@ -33,10 +37,13 @@ fn parseExports(body: Vec<ParsedToken>) -> Vec<String> {
         })
         .map(|x| match x {
             ParsedToken::Statement(token) => match token.clone() {
-                StatementToken::ExportDeclaration(token) => match *token {
-                    StatementToken::VariableDeclaration(name, ..)
-                    | StatementToken::FunctionDeclaration(name, ..)
-                    | StatementToken::ConstantDeclaration(name, ..) => name,
+                StatementToken::ExportDeclaration(token, ..) => match *token {
+                    ParsedToken::Statement(
+                        StatementToken::VariableDeclaration(name, ..)
+                        | StatementToken::FunctionDeclaration(name, ..)
+                        | StatementToken::ConstantDeclaration(name, ..),
+                    ) => name,
+                    ParsedToken::Expr(Expression::Identifier(name)) => name,
                     _ => "".to_string(),
                 },
                 _ => unreachable!(),
@@ -55,9 +62,11 @@ pub fn verifyImport(pointer: &mut ManuallyDrop<Pointer>, names: Vec<Token>, path
             let mut compiler = Compiler::new(CompilerConfig::new(
                 std::path::PathBuf::from(getPath(path.clone())),
                 name.clone().to_string(),
+                pointer.isNode,
+                pointer.es6,
             ));
 
-            let (code, tokens) = compiler.run();
+            let (code, tokens, imports) = compiler.run();
             let exports = parseExports(tokens);
 
             for name in &names {
@@ -70,9 +79,11 @@ pub fn verifyImport(pointer: &mut ManuallyDrop<Pointer>, names: Vec<Token>, path
 
             pointer.imports.push(ImportedModule {
                 names,
+                imports: Box::new(imports),
                 exports,
                 path: path.clone(),
                 code: code.clone(),
+                isLibrary: isLibrary(path.clone()),
             });
 
             return;

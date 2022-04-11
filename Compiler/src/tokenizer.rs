@@ -204,6 +204,7 @@ impl Tokenizer {
             letter: lines[0 as usize].iter().nth(0).unwrap().to_string(),
             keywords: Vec::from([
                 "let", "const", "async", "fn", "return", "if", "else", "import", "from", "export",
+                "default",
             ])
             .iter()
             .map(|data| data.to_string())

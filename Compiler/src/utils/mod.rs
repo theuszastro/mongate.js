@@ -2,8 +2,8 @@ mod path;
 mod pointer;
 mod structs;
 
-pub use path::{existsFile, getPath, verifyImport};
-pub use pointer::{GlobalFunc, ImportedModule, Pointer};
+pub use path::{existsFile, getPath, isLibrary, verifyImport};
+pub use pointer::{ExportedModule, GlobalFunc, ImportedModule, Pointer};
 pub use structs::{Expression, HoistingBlock, ParsedToken, StatementToken, Token, TokenContext};
 
 pub fn formatFunctionName(name: String, globalFun: Option<GlobalFunc>) -> String {

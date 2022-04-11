@@ -4,14 +4,14 @@ pub struct HoistingBlock {
     pub current: Vec<ParsedToken>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TokenContext {
     pub filename: String,
     pub line: i64,
     pub lineContent: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Identifier(String, TokenContext),
     Number(String, TokenContext),
@@ -28,7 +28,7 @@ pub enum Token {
     EOF,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     Number(String),
     Identifier(String),
@@ -46,19 +46,19 @@ pub enum Expression {
     Undefined,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum StatementToken {
     IfDeclaration(Expression, Vec<ParsedToken>, Vec<ParsedToken>),
     CommentDeclaration(String),
     ReturnDeclaration(Expression),
     VariableDeclaration(String, Expression),
     ConstantDeclaration(String, Expression),
-    ExportDeclaration(Box<StatementToken>),
+    ExportDeclaration(Box<ParsedToken>, bool),
     ImportDeclaration(Vec<Token>, String),
     FunctionDeclaration(String, Vec<Expression>, Vec<ParsedToken>, bool),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ParsedToken {
     Expr(Expression),
     Statement(StatementToken),
