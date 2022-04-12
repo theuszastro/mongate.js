@@ -1,7 +1,8 @@
 use std::mem::ManuallyDrop;
 
 use super::{binary::binary, functionCall::functionCall, logical::logical};
-use crate::utils::{findBody, Expression, HoistingBlock, Pointer, Token};
+use crate::utils::{findBody, findGlobalFunc, findImports};
+use crate::utils::{Expression, HoistingBlock, Pointer, Token};
 
 pub fn identifier(
     pointer: &mut ManuallyDrop<Pointer>,
@@ -24,7 +25,10 @@ pub fn identifier(
             return Some(expr);
         }
 
-        if let None = findBody(body.clone(), value.clone()) {
+        if !findImports(&pointer.imports, value.clone())
+            && findGlobalFunc(&pointer.globalFunctions, value.clone()).is_none()
+            && findBody(body.clone(), value.clone()).is_none()
+        {
             pointer.error(format!("Identifier '{}' not declared", value));
         }
 

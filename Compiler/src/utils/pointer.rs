@@ -1,23 +1,10 @@
+use std::env::current_dir;
+
 use crate::errors::SyntaxError;
 use crate::tokenizer::Tokenizer;
+use crate::utils::{ExportedModule, GlobalFunc, ImportedModule, Memorized};
 
-use super::{ParsedToken, Token};
-
-#[derive(Debug, Clone)]
-pub struct ExportedModule {
-    pub isDefault: bool,
-    pub token: ParsedToken,
-}
-
-#[derive(Debug, Clone)]
-pub struct ImportedModule {
-    pub path: String,
-    pub code: String,
-    pub imports: Box<Vec<ImportedModule>>,
-    pub names: Vec<Token>,
-    pub exports: Vec<String>,
-    pub isLibrary: bool,
-}
+use super::Token;
 
 #[derive(Debug, Clone)]
 pub struct Pointer {
@@ -27,33 +14,25 @@ pub struct Pointer {
     pub imports: Vec<ImportedModule>,
     pub exports: Vec<ExportedModule>,
 
+    pub executable: String,
+    pub folder: String,
     pub isNode: bool,
     pub es6: bool,
     pub code: String,
 }
 
-pub struct Memorized {
-    pub tokenizer: (String, usize, usize),
-    pub token: Option<Token>,
-}
-
-#[derive(Debug, Clone)]
-pub struct GlobalFunc {
-    pub name: String,
-    pub replace: String,
-}
-
-impl GlobalFunc {
-    pub fn new(name: String, replace: String) -> Self {
-        Self { name, replace }
-    }
-}
-
 impl Pointer {
-    pub fn new(tokenizer: Tokenizer, isNode: bool, es6: bool) -> Self {
+    pub fn new(tokenizer: Tokenizer, folder: String, isNode: bool, es6: bool) -> Self {
+        let mut executable = current_dir().unwrap().to_str().unwrap().to_string();
+
+        executable = executable.replace("/target/debug/Compiler", "");
+        executable = executable.replace("/target/release/Compiler", "");
+
         Self {
             token: None,
             code: String::new(),
+            executable,
+            folder,
             isNode,
             es6,
             tokenizer,

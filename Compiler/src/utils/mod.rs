@@ -2,9 +2,12 @@ mod path;
 mod pointer;
 mod structs;
 
-pub use path::{existsFile, getPath, isLibrary, verifyImport};
-pub use pointer::{ExportedModule, GlobalFunc, ImportedModule, Pointer};
-pub use structs::{Expression, HoistingBlock, ParsedToken, StatementToken, Token, TokenContext};
+pub use path::{getPath, isLibrary, verifyImport};
+pub use pointer::Pointer;
+pub use structs::{
+    CompilerResult, ExportedModule, Expression, GlobalFunc, HoistingBlock, ImportedModule,
+    ImportedResult, Memorized, ParsedToken, StatementToken, Token, TokenContext,
+};
 
 pub fn formatFunctionName(name: String, globalFun: Option<GlobalFunc>) -> String {
     if let Some(GlobalFunc {
@@ -35,6 +38,12 @@ pub fn findGlobalFunc(functions: &Vec<GlobalFunc>, name: String) -> Option<Globa
 
 pub fn findImports(imports: &Vec<ImportedModule>, name: String) -> bool {
     for import in imports {
+        if let Some(de) = import.default.clone() {
+            if de.clone() == name {
+                return true;
+            }
+        }
+
         for iName in &import.names {
             if let Token::Identifier(tName, ..) = iName {
                 if tName.clone() == name {

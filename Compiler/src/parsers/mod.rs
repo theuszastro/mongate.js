@@ -84,9 +84,9 @@ impl Parser {
         );
     }
 
-    pub fn new(tokenizer: Tokenizer, isNode: bool, es6: bool) -> Self {
+    pub fn new(tokenizer: Tokenizer, folder: String, isNode: bool, es6: bool) -> Self {
         Self {
-            pointer: Pointer::new(tokenizer, isNode, es6),
+            pointer: Pointer::new(tokenizer, folder, isNode, es6),
             body: HoistingBlock {
                 block: Box::new(None),
                 current: vec![],

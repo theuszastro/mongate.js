@@ -80,41 +80,60 @@ pub fn generate(pointer: &mut ManuallyDrop<Pointer>, token: ParsedToken) {
     match token {
         ParsedToken::Expr(expr) => pointer.code.push_str(&expression(expr)),
         ParsedToken::Statement(data) => match data {
-            StatementToken::ExportDeclaration(value, isDefault) => {
+            StatementToken::ExportDeclaration(default, value) => {
                 if !pointer.isNode {
                     pointer.code.push_str("export ");
 
-                    if isDefault {
+                    if default.is_some() {
                         pointer.code.push_str("default ");
                     }
                 }
 
                 generate(pointer, *value);
             }
-            StatementToken::ImportDeclaration(names, from) => {
+            StatementToken::ImportDeclaration(default, names, from) => {
                 if pointer.isNode && !isLibrary(from.clone()) {
                     return;
                 }
 
                 if pointer.es6 {
-                    pointer.code.push_str("import {");
+                    pointer.code.push_str("import ");
+
+                    if let Some(defaultName) = default {
+                        pointer.code.push_str(&format!(
+                            "{}{}",
+                            defaultName,
+                            if names.len() >= 1 { ", " } else { " " }
+                        ));
+                    }
                 } else {
-                    pointer.code.push_str("const {");
+                    pointer.code.push_str("const { ");
+
+                    if let Some(defaultName) = default {
+                        pointer.code.push_str(&format!("default: {} ", defaultName));
+                    }
+
+                    if names.len() < 1 {
+                        pointer.code.push_str("} ");
+                    }
                 }
 
                 if names.len() >= 1 {
+                    pointer.code.push_str("{ ");
+
                     for importedName in names.iter() {
                         if let Token::Identifier(name, ..) = importedName {
                             pointer.code.push_str(&format!("{}, ", name));
                         }
                     }
+
                     if pointer.code.ends_with(", ") {
                         pointer.code.pop();
                         pointer.code.pop();
                     }
-                }
 
-                pointer.code.push_str("} ");
+                    pointer.code.push_str(" } ");
+                }
 
                 if pointer.es6 {
                     pointer.code.push_str(&format!("from '{}';", from));

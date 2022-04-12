@@ -1,3 +1,5 @@
+use serde_derive::Serialize;
+
 #[derive(Debug, Clone)]
 pub struct HoistingBlock {
     pub block: Box<Option<HoistingBlock>>,
@@ -9,6 +11,18 @@ pub struct TokenContext {
     pub filename: String,
     pub line: i64,
     pub lineContent: String,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct ImportedResult {
+    pub code: String,
+    pub path: String,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct CompilerResult {
+    pub code: String,
+    pub imports: Vec<ImportedResult>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -53,8 +67,8 @@ pub enum StatementToken {
     ReturnDeclaration(Expression),
     VariableDeclaration(String, Expression),
     ConstantDeclaration(String, Expression),
-    ExportDeclaration(Box<ParsedToken>, bool),
-    ImportDeclaration(Vec<Token>, String),
+    ExportDeclaration(Option<String>, Box<ParsedToken>),
+    ImportDeclaration(Option<String>, Vec<Token>, String),
     FunctionDeclaration(String, Vec<Expression>, Vec<ParsedToken>, bool),
 }
 
@@ -99,5 +113,38 @@ impl Token {
             Token::Symbol(data, _) => data.to_string(),
             Token::EOF => "EOF".to_string(),
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ExportedModule {
+    pub isDefault: bool,
+    pub token: ParsedToken,
+}
+
+#[derive(Debug, Clone)]
+pub struct ImportedModule {
+    pub path: String,
+    pub code: String,
+    pub imports: Box<Vec<ImportedModule>>,
+    pub names: Vec<Token>,
+    pub default: Option<String>,
+    pub isLibrary: bool,
+}
+
+pub struct Memorized {
+    pub tokenizer: (String, usize, usize),
+    pub token: Option<Token>,
+}
+
+#[derive(Debug, Clone)]
+pub struct GlobalFunc {
+    pub name: String,
+    pub replace: String,
+}
+
+impl GlobalFunc {
+    pub fn new(name: String, replace: String) -> Self {
+        Self { name, replace }
     }
 }

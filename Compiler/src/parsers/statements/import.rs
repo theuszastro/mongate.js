@@ -52,36 +52,79 @@ pub fn import(
 ) -> Option<StatementToken> {
     pointer.take("Keyword", true, true);
 
-    match pointer.token.clone() {
-        Some(Token::Brackets(bra, _)) if bra == "{" => {
-            pointer.take("Brackets", true, true);
+    let mut default: Option<String> = None;
 
-            let names = readImports(pointer, body);
+    loop {
+        match pointer.token.clone() {
+            Some(Token::Identifier(name, _)) => {
+                pointer.take("Identifier", true, true);
 
-            if names.is_empty() {
-                pointer.error("Expected 'Identifier'".to_string());
-            }
+                if findName(&body.current, name.clone()).is_some()
+                    || findImports(&pointer.imports, name.clone())
+                {
+                    pointer.error(format!("Identifier '{}' already declared", name));
+                }
 
-            match pointer.token.clone() {
-                Some(Token::Keyword(key, ..)) if key == "from" => {
-                    pointer.take("Keyword", true, true);
+                if findGlobalFunc(&pointer.globalFunctions, name.clone()).is_some() {
+                    pointer.error(format!("Identifier '{}' is a global function ", name));
+                }
 
-                    match expression(pointer, body) {
-                        Some(Expression::String(from, ..)) => {
-                            verifyImport(pointer, names.clone(), from.clone());
+                default = Some(name);
 
-                            return Some(StatementToken::ImportDeclaration(names, from));
+                match pointer.token.clone() {
+                    Some(Token::Keyword(key, _)) if key == "from" => {
+                        pointer.take("Keyword", true, true);
+
+                        match expression(pointer, body) {
+                            Some(Expression::String(from, ..)) => {
+                                verifyImport(pointer, default.clone(), vec![], from.clone());
+
+                                return Some(StatementToken::ImportDeclaration(
+                                    default,
+                                    vec![],
+                                    from,
+                                ));
+                            }
+                            _ => pointer.error("Expected a string".to_string()),
                         }
-                        _ => pointer.error("Expected a string".to_string()),
+                    }
+                    Some(Token::Punctuation(punc, _)) if punc == "," => {
+                        pointer.take("Punctuation", true, true);
+
+                        continue;
+                    }
+                    _ => {}
+                }
+            }
+            Some(Token::Brackets(bra, _)) if bra == "{" => {
+                pointer.take("Brackets", true, true);
+
+                let names = readImports(pointer, body);
+                if names.is_empty() {
+                    pointer.error("Expected 'Identifier'".to_string());
+                }
+
+                match pointer.token.clone() {
+                    Some(Token::Keyword(key, ..)) if key == "from" => {
+                        pointer.take("Keyword", true, true);
+
+                        match expression(pointer, body) {
+                            Some(Expression::String(from, ..)) => {
+                                verifyImport(pointer, default.clone(), names.clone(), from.clone());
+
+                                return Some(StatementToken::ImportDeclaration(
+                                    default, names, from,
+                                ));
+                            }
+                            _ => pointer.error("Expected a string".to_string()),
+                        }
+                    }
+                    _ => {
+                        pointer.error("Expected 'from'".to_string());
                     }
                 }
-                _ => {
-                    pointer.error("Expected 'from'".to_string());
-                }
             }
+            _ => pointer.error("invalid import".to_string()),
         }
-        _ => pointer.error("invalid import".to_string()),
     }
-
-    None
 }

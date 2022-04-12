@@ -5,6 +5,8 @@ use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::process;
 
+use serde_json::to_string;
+
 mod compiler;
 mod errors;
 mod generation;
@@ -13,6 +15,7 @@ mod tokenizer;
 mod utils;
 
 use crate::compiler::{Compiler, CompilerConfig};
+use utils::{CompilerResult, ImportedResult};
 
 fn main() {
     let mut filename = String::new();
@@ -52,9 +55,20 @@ fn main() {
             filename: filename.clone(),
         });
 
-        let (code, _, _) = compiler.run();
+        let (code, _, imports) = compiler.run();
 
-        println!("{}", code);
+        let result = CompilerResult {
+            code,
+            imports: imports
+                .iter()
+                .map(|i| ImportedResult {
+                    code: i.code.clone(),
+                    path: i.path.clone(),
+                })
+                .collect::<Vec<ImportedResult>>(),
+        };
+
+        println!("{}", to_string(&result).unwrap());
 
         return;
     }

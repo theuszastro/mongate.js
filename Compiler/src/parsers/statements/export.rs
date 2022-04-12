@@ -2,7 +2,8 @@ use std::mem::ManuallyDrop;
 
 use super::{expression, statements};
 use crate::utils::{
-    ExportedModule, Expression, HoistingBlock, ParsedToken, Pointer, StatementToken, Token,
+    findGlobalFunc, ExportedModule, Expression, HoistingBlock, ParsedToken, Pointer,
+    StatementToken, Token,
 };
 
 fn alreadyExported(
@@ -52,6 +53,10 @@ pub fn export(
                     pointer.error(format!("Default export already declared"));
                 }
 
+                if findGlobalFunc(&pointer.globalFunctions, name.clone()).is_some() {
+                    pointer.error(format!("Identifier '{}' is a global function ", name));
+                }
+
                 if !alreadyExported(pointer, Some(token.clone()), isDefault) {
                     pointer.exports.push(ExportedModule {
                         isDefault,
@@ -59,8 +64,8 @@ pub fn export(
                     });
 
                     return Some(StatementToken::ExportDeclaration(
+                        Some(name),
                         Box::new(token),
-                        isDefault,
                     ));
                 }
 
@@ -94,8 +99,8 @@ pub fn export(
                 });
 
                 return Some(StatementToken::ExportDeclaration(
+                    if isDefault { Some(String::new()) } else { None },
                     Box::new(token),
-                    isDefault,
                 ));
             }
 

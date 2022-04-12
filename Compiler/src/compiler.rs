@@ -1,10 +1,11 @@
-use crate::utils::ImportedModule;
 use std::fs;
 use std::path::PathBuf;
 
+use regex::Regex;
+
 use crate::parsers::Parser;
 use crate::tokenizer::Tokenizer;
-use crate::utils::ParsedToken;
+use crate::utils::{ImportedModule, ParsedToken};
 
 pub struct Compiler {
     config: CompilerConfig,
@@ -39,14 +40,20 @@ impl Compiler {
 
     pub fn run(&mut self) -> (String, Vec<ParsedToken>, Vec<ImportedModule>) {
         let CompilerConfig {
-            filename,
+            filename: path,
             content,
             isNode,
             es6,
         } = self.config.clone();
 
-        let tokenizer = Tokenizer::new(filename.clone(), content.clone());
-        let mut parser = Parser::new(tokenizer, isNode, es6);
+        let regex = Regex::new(r"(.+)/$").unwrap();
+
+        let filename = path.split("/").last().unwrap();
+        let result = path.replace(filename, "");
+        let folder = regex.replace(result.as_str(), "$1").to_string();
+
+        let tokenizer = Tokenizer::new(path.clone(), content.clone());
+        let mut parser = Parser::new(tokenizer, folder, isNode, es6);
 
         return parser.run();
     }
