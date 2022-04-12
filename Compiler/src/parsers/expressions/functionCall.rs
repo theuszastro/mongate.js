@@ -27,20 +27,25 @@ pub fn functionCall(
                 Some(Token::Brackets(bracket, _)) if bracket == "(" => {
                     pointer.take("Brackets", true, true);
 
-                    loop {
-                        if let Some(expr) = expression(pointer, body) {
-                            args.push(expr);
+                    match pointer.token.clone() {
+                        Some(Token::Brackets(bracket, _)) if bracket == ")" => {}
+                        _ => loop {
+                            if let Some(expr) = expression(pointer, body) {
+                                args.push(expr);
 
-                            match pointer.token.clone() {
-                                Some(Token::Brackets(bracket, _)) if bracket == ")" => {
-                                    break;
+                                match pointer.token.clone() {
+                                    Some(Token::Brackets(bracket, _)) if bracket == ")" => {
+                                        break;
+                                    }
+                                    Some(Token::Punctuation(punctuation, _))
+                                        if punctuation == "," =>
+                                    {
+                                        pointer.take("Punctuation", true, true);
+                                    }
+                                    _ => break,
                                 }
-                                Some(Token::Punctuation(punctuation, _)) if punctuation == "," => {
-                                    pointer.take("Punctuation", true, true);
-                                }
-                                _ => break,
                             }
-                        }
+                        },
                     }
 
                     if let Some(Token::Brackets(brack, _)) = pointer.take("Brackets", true, true) {

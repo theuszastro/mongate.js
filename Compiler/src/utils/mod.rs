@@ -1,8 +1,10 @@
+mod imports;
 mod path;
 mod pointer;
 mod structs;
 
-pub use path::{getPath, isLibrary, verifyImport};
+pub use imports::verifyImport;
+pub use path::{getPath, isLibrary};
 pub use pointer::Pointer;
 pub use structs::{
     CompilerResult, ExportedModule, Expression, GlobalFunc, HoistingBlock, ImportedModule,
