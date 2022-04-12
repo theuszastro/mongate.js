@@ -54,7 +54,7 @@ pub fn export(
                 }
 
                 if findGlobalFunc(&pointer.globalFunctions, name.clone()).is_some() {
-                    pointer.error(format!("Identifier '{}' is a global function ", name));
+                    pointer.error(format!("Cannot export a global function '{}'", name));
                 }
 
                 if !alreadyExported(pointer, Some(token.clone()), isDefault) {

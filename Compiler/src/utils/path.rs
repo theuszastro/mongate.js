@@ -12,92 +12,27 @@ pub fn isLibrary(path: String) -> bool {
 
 pub fn getPath(pointer: &mut ManuallyDrop<Pointer>, filePath: String) -> String {
     let regex = Regex::new(r"^\.{1,2}/(.+)").unwrap();
+    let last = Regex::new(r"^(.+)/$").unwrap();
 
-    let mut path = regex.replace(filePath.as_str(), "$1").to_string();
-    path.push_str(".nylock");
+    let path = regex.replace(filePath.as_str(), "$1").to_string();
 
-    let regex = Regex::new(r"(.+)/$").unwrap();
+    let folderEmpty = format!("{}/{}", pointer.executable, path);
+    let folderNotEmpty = format!("{}/{}/{}", pointer.executable, pointer.folder, path);
 
-    let last = path.split("/").last().unwrap();
-    let replaced = path.replace(last, "");
-    let newPath = regex.replace(replaced.as_str(), "$1").to_string();
+    let path = if pointer.folder.is_empty() {
+        folderEmpty.clone()
+    } else {
+        folderNotEmpty.clone()
+    };
 
-    let folder = pointer.folder.clone();
-
-    if folder.is_empty() {
-        pointer.folder = newPath.clone();
-
-        return format!("{}/{}", pointer.executable, path);
+    if PathBuf::from(path.clone()).is_dir() {
+        return getPath(
+            pointer,
+            format!("{}/index", last.replace(&filePath, "$1").to_string()),
+        );
     }
 
-    pointer.folder = format!("{}/{}", folder, newPath);
-
-    return format!("{}/{}/{}", pointer.executable, folder, path);
-}
-
-fn verifyExports(
-    pointer: &mut ManuallyDrop<Pointer>,
-    body: Vec<ParsedToken>,
-    names: Vec<Token>,
-    default: Option<String>,
-) {
-    let names = names
-        .iter()
-        .map(|x| x.tokenValue())
-        .collect::<Vec<String>>();
-
-    let mut hasDefault = false;
-
-    for export in body
-        .iter()
-        .filter(|token| match token {
-            ParsedToken::Statement(StatementToken::ExportDeclaration(..)) => true,
-            _ => false,
-        })
-        .map(|x| x.clone())
-    {
-        match export {
-            ParsedToken::Statement(token) => match token.clone() {
-                StatementToken::ExportDeclaration(exportDefault, token) => {
-                    if let Some(d) = exportDefault {
-                        hasDefault = true;
-
-                        continue;
-                    }
-
-                    match *token {
-                        ParsedToken::Statement(
-                            StatementToken::VariableDeclaration(name, ..)
-                            | StatementToken::FunctionDeclaration(name, ..)
-                            | StatementToken::ConstantDeclaration(name, ..),
-                        ) => {
-                            if names.contains(&name) {
-                                continue;
-                            }
-
-                            pointer.error(format!("Export declaration '{}' is not exported", name));
-                        }
-                        ParsedToken::Expr(Expression::Identifier(name)) => {
-                            if names.contains(&name) {
-                                continue;
-                            }
-
-                            pointer.error(format!("Export declaration '{}' is not exported", name));
-                        }
-                        _ => {}
-                    }
-                }
-                _ => {}
-            },
-            _ => {}
-        }
-    }
-
-    if default.is_some() {
-        if !hasDefault {
-            pointer.error("Export default not found".to_string());
-        }
-    }
+    return format!("{}.nylock", path);
 }
 
 pub fn verifyImport(
@@ -114,8 +49,8 @@ pub fn verifyImport(
             name.push_str(".nylock");
 
             let mut compiler = Compiler::new(CompilerConfig::new(
-                pathBuf,
-                format!("{}/{}", pointer.folder, name),
+                pathBuf.clone(),
+                pathBuf.to_str().unwrap().replace(&pointer.executable, ""),
                 pointer.isNode,
                 pointer.es6,
             ));
@@ -136,5 +71,101 @@ pub fn verifyImport(
         }
 
         pointer.error(format!("file '{}' not found", path));
+    }
+}
+
+fn exportsToNames(exports: &Vec<ParsedToken>) -> Vec<String> {
+    exports
+        .iter()
+        .filter(|export| match export {
+            ParsedToken::Statement(token) => match token.clone() {
+                StatementToken::ExportDeclaration(exportDefault, token) => {
+                    if exportDefault.is_some() {
+                        return false;
+                    }
+                    match *token {
+                        ParsedToken::Statement(
+                            StatementToken::VariableDeclaration(..)
+                            | StatementToken::FunctionDeclaration(..)
+                            | StatementToken::ConstantDeclaration(..),
+                        ) => {
+                            return true;
+                        }
+                        ParsedToken::Expr(Expression::Identifier(_)) => {
+                            return true;
+                        }
+                        _ => {
+                            return false;
+                        }
+                    }
+                }
+                _ => {
+                    return false;
+                }
+            },
+            _ => {
+                return false;
+            }
+        })
+        .map(|x| match x {
+            ParsedToken::Statement(StatementToken::ExportDeclaration(_, token)) => {
+                match *token.clone() {
+                    ParsedToken::Statement(
+                        StatementToken::VariableDeclaration(name, ..)
+                        | StatementToken::FunctionDeclaration(name, ..)
+                        | StatementToken::ConstantDeclaration(name, ..),
+                    ) => {
+                        return name.clone();
+                    }
+                    ParsedToken::Expr(Expression::Identifier(name)) => {
+                        return name.clone();
+                    }
+                    _ => {
+                        return String::new();
+                    }
+                }
+            }
+            _ => {
+                return String::new();
+            }
+        })
+        .collect::<Vec<String>>()
+}
+
+fn verifyExports(
+    pointer: &mut ManuallyDrop<Pointer>,
+    body: Vec<ParsedToken>,
+    names: Vec<Token>,
+    default: Option<String>,
+) {
+    let names = names
+        .iter()
+        .map(|x| x.tokenValue())
+        .collect::<Vec<String>>();
+
+    let exports = body
+        .iter()
+        .filter(|token| match token {
+            ParsedToken::Statement(StatementToken::ExportDeclaration(..)) => true,
+            _ => false,
+        })
+        .map(|x| x.clone())
+        .collect::<Vec<ParsedToken>>();
+
+    let defaultExport = exports.iter().find(|x| match x {
+        ParsedToken::Statement(StatementToken::ExportDeclaration(export, ..)) => export.is_some(),
+        _ => false,
+    });
+
+    let exportsNames = exportsToNames(&exports);
+
+    for name in &names {
+        if !exportsNames.contains(&name.clone()) {
+            pointer.error(format!("Export '{}' is not exported", name,));
+        }
+    }
+
+    if default.is_some() && defaultExport.is_none() {
+        pointer.error("Export default not found".to_string());
     }
 }

@@ -89,6 +89,10 @@ pub fn generate(pointer: &mut ManuallyDrop<Pointer>, token: ParsedToken) {
                     }
                 }
 
+                if let ParsedToken::Expr(_) = *value {
+                    return;
+                }
+
                 generate(pointer, *value);
             }
             StatementToken::ImportDeclaration(default, names, from) => {
