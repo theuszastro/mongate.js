@@ -36,11 +36,15 @@ const execAsync = promisify(exec);
 
 (async () => {
     try {
-        const { stdout } = await execAsync(`./Compiler data.nylock`);
+        const { stdout } = await execAsync(`./Compiler data/data.nylock --react --es6`);
 
-        runInThisContext(`${stdout} console.log("Hello World");`);
+        console.log(stdout);
+
+        // runInThisContext(stdout);
     } catch(e) {
         const { stdout } = e as any;
+
+        console.log(stdout);
 
         if (stdout) {
             const { type, reason, filename, lineNumber, lines } = JSON.parse(stdout);

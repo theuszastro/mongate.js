@@ -3,8 +3,6 @@ node_modules
 build
 
 *.nylock
-*.js
-*.mjs
 
 oldSrc
 target
